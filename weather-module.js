@@ -1,27 +1,4 @@
-// GeurMonitor v0.4 - Open-Meteo wind enrichment
-function windCompass(degrees) {
-  if (degrees === null || degrees === undefined || Number.isNaN(Number(degrees))) return null;
-  const labels = ['N','NO','O','ZO','Z','ZW','W','NW'];
-  return labels[Math.round((Number(degrees) % 360) / 45) % 8];
-}
-
-async function fetchWindForLocation(latitude, longitude) {
-  const params = new URLSearchParams({
-    latitude: String(latitude),
-    longitude: String(longitude),
-    current: 'wind_speed_10m,wind_direction_10m',
-    wind_speed_unit: 'kmh',
-    timezone: 'auto'
-  });
-  const response = await fetch('https://api.open-meteo.com/v1/forecast?' + params.toString());
-  if (!response.ok) throw new Error('Windgegevens konden niet worden opgehaald');
-  const data = await response.json();
-  const current = data.current || {};
-  return {
-    windSpeedKmh: current.wind_speed_10m ?? null,
-    windDirectionDeg: current.wind_direction_10m ?? null,
-    windDirectionCompass: windCompass(current.wind_direction_10m),
-    weatherObservedAt: current.time || null,
-    weatherSource: 'Open-Meteo'
-  };
-}
+function windCompass(degrees){if(degrees===null||degrees===undefined||Number.isNaN(Number(degrees)))return null;const labels=['N','NO','O','ZO','Z','ZW','W','NW'];return labels[Math.round((((Number(degrees)%360)+360)%360)/45)%8]}
+function dayString(d){const z=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`}
+async function fetchWindForDateTime(latitude,longitude,observedAt){const now=new Date(), historical=observedAt.getTime()<now.getTime()-6*60*60*1000, ageDays=(now-observedAt)/86400000;let url;if(historical){const day=dayString(observedAt);const q=new URLSearchParams({latitude,longitude,start_date:day,end_date:day,hourly:'wind_speed_10m,wind_direction_10m',wind_speed_unit:'kmh',timezone:'auto'});url=(ageDays<=5?'https://api.open-meteo.com/v1/forecast?':'https://archive-api.open-meteo.com/v1/archive?')+q}else{const q=new URLSearchParams({latitude,longitude,current:'wind_speed_10m,wind_direction_10m',wind_speed_unit:'kmh',timezone:'auto'});url='https://api.open-meteo.com/v1/forecast?'+q}const response=await fetch(url);if(!response.ok)throw new Error('weather');const data=await response.json();let speed,deg,time;if(historical){const times=data.hourly?.time||[];if(!times.length)throw new Error('no historical weather');let idx=0,best=Infinity;times.forEach((t,i)=>{const diff=Math.abs(new Date(t).getTime()-observedAt.getTime());if(diff<best){best=diff;idx=i}});speed=data.hourly.wind_speed_10m?.[idx]??null;deg=data.hourly.wind_direction_10m?.[idx]??null;time=times[idx]||null}else{speed=data.current?.wind_speed_10m??null;deg=data.current?.wind_direction_10m??null;time=data.current?.time||null}return {windSpeedKmh:speed,windDirectionDeg:deg,windDirectionCompass:windCompass(deg),weatherObservedAt:time,weatherSource:'Open-Meteo'}}
+async function fetchWindForLocation(latitude,longitude){return fetchWindForDateTime(latitude,longitude,new Date())}
