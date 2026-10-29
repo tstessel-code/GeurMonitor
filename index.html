@@ -1,25 +1,2069 @@
-<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0f766e"><link rel="manifest" href="manifest.webmanifest"><title>GeurMonitor</title><style>
-:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#17211f;background:#f4f7f6}*{box-sizing:border-box}body{margin:0}header{background:#0f766e;color:#fff;padding:18px;position:sticky;top:0;z-index:2}h1{margin:0;font-size:22px}.sub,.muted{opacity:.8;font-size:13px}.wrap{max-width:620px;margin:auto;padding:16px 16px 92px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 3px 16px #0000000d}.hero{text-align:center;padding:26px 16px}.heroIcon{font-size:50px}.btn,.big{width:100%;border:0;border-radius:15px;padding:15px;background:#0f766e;color:#fff;font-weight:800;margin-top:12px}.big{font-size:18px;padding:18px}.secondary{background:#e7f1ef;color:#0f5f59}.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.level{border:2px solid transparent;border-radius:14px;padding:10px 3px;font-size:11px;font-weight:700}.level b{display:block;font-size:22px}.level.sel{border-color:#111}label{display:block;font-weight:700;margin:13px 0 7px}select,textarea{width:100%;padding:12px;border:1px solid #ccd6d3;border-radius:12px;font:inherit}textarea{min-height:80px}.hidden{display:none!important}.success{text-align:center;padding:30px 18px}.check{font-size:48px;color:#078052}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:center}.nav button{width:min(33.33%,205px);padding:13px 4px 17px;border:0;background:#fff}.nav .active{color:#0f766e;font-weight:800}.item{border-left:6px solid #999;background:#f5f8f7;padding:10px;border-radius:10px;margin:8px 0}.sync{font-size:12px;margin-top:5px}.ok{color:#08734f}.warn{color:#9a5b00}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#f4f8f7;border-radius:12px;padding:12px}.stat b{display:block;font-size:22px;color:#0f766e}.notice{font-size:12px}.topline{display:flex;justify-content:space-between}.windbox{background:#eef7f5;border-radius:12px;padding:10px;margin-top:8px}
-</style></head><body><header><h1>🌬️ GeurMonitor</h1><div class="sub">Online geurhinder registreren</div></header><main class="wrap">
-<section id="home"><div class="card hero"><div class="heroIcon">🌬️</div><h2>Geurhinder monitoren</h2><p>Registreer snel een nieuwe waarneming.</p><button class="big" id="new">＋ Geurhinder toevoegen</button></div><div class="card notice" id="cloudState">Online database controleren…</div></section>
-<section id="form" class="hidden"><div class="card"><h2>Nieuwe geurmelding</h2><label>Intensiteit</label><div class="levels" id="levels"></div><label>Geurtype</label><select id="odor"><option value="">Niet gekozen</option><option>Mest / organisch</option><option>Chemisch</option><option>Verbrand</option><option>Afval</option><option>Andere</option></select><label>Locatie & wind</label><button class="btn secondary" id="gps">📍 Huidige locatie gebruiken</button><div class="muted" id="gpsState">Nog geen locatie.</div><div class="muted windbox" id="windState">Windgegevens worden automatisch opgehaald na GPS.</div><label>Opmerking (optioneel)</label><textarea id="comment" maxlength="500"></textarea><button class="btn" id="save">Melding opslaan</button><button class="btn secondary" id="cancel">Annuleren</button></div></section>
-<section id="success" class="hidden"><div class="card success"><div class="check">✓</div><h2>Melding succesvol opgeslagen</h2><p id="successText">De melding staat online.</p><button class="btn" id="backHome">Terug naar hoofdpagina</button></div></section>
-<section id="reports" class="hidden"><div class="card"><div class="topline"><h2>Meldingen</h2><button class="btn secondary" style="width:auto;margin:0;padding:8px 12px" id="sync">Synchroniseren</button></div><div id="list"></div></div></section>
-<section id="dashboard" class="hidden"><div class="card"><h2>Dashboard</h2><div class="stats"><div class="stat"><b id="today">0</b>Vandaag</div><div class="stat"><b id="week">0</b>7 dagen</div><div class="stat"><b id="max">–</b>Hoogste</div><div class="stat"><b id="common">–</b>Meest gemeld</div></div></div></section>
-</main><nav class="nav"><button data-page="home" class="active">⌂<br>Home</button><button data-page="reports">☷<br>Meldingen</button><button data-page="dashboard">▥<br>Dashboard</button></nav>
-<script src="config.js"></script><script src="weather-module.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
-const D=[['Geen','#4caf50'],['Licht','#c9d72e'],['Matig','#f5a623'],['Sterk','#e84a3c'],['Zeer sterk','#7d2b73']];let level=null,coords=null,wind=null,db=null;const $=x=>document.getElementById(x),local=()=>JSON.parse(localStorage.getItem('geurmonitor')||'[]'),saveLocal=x=>localStorage.setItem('geurmonitor',JSON.stringify(x));
-function configured(){let c=window.GEURMONITOR_CONFIG||{};return c.supabaseUrl&&!c.supabaseUrl.startsWith('VUL_')&&c.supabaseAnonKey&&!c.supabaseAnonKey.startsWith('VUL_')}
-if(configured()){const c=window.GEURMONITOR_CONFIG;db=supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);$('cloudState').innerHTML='☁️ <b>Online opslag actief</b>. Niet-gesynchroniseerde meldingen blijven ook lokaal bewaard.'}else $('cloudState').innerHTML='⚠️ <b>Online opslag nog niet ingesteld.</b> Vul config.js in; voorlopig wordt lokaal opgeslagen.';
-function show(id){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='reports'||id==='dashboard')syncAll()}
-D.forEach((d,i)=>{let b=document.createElement('button');b.className='level';b.style.background=d[1]+'26';b.innerHTML=`<b>${i}</b>${d[0]}`;b.onclick=()=>{level=i;document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};$('levels').appendChild(b)});
-function reset(){level=null;coords=null;wind=null;document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));$('odor').value='';$('comment').value='';$('gpsState').textContent='Nog geen locatie.';$('windState').textContent='Windgegevens worden automatisch opgehaald na GPS.'}
-$('new').onclick=()=>{reset();show('form')};$('cancel').onclick=()=>show('home');$('backHome').onclick=()=>show('home');
-$('gps').onclick=()=>navigator.geolocation.getCurrentPosition(async p=>{coords={lat:p.coords.latitude,lon:p.coords.longitude};$('gpsState').textContent='✓ Locatie bepaald';$('windState').textContent='💨 Windgegevens ophalen…';try{wind=await fetchWindForLocation(coords.lat,coords.lon);let deg=wind.windDirectionDeg==null?'–':Math.round(wind.windDirectionDeg)+'°';$('windState').textContent=`💨 ${wind.windSpeedKmh ?? '–'} km/u · ${wind.windDirectionCompass ?? '–'} (${deg})`}catch(e){wind=null;$('windState').textContent='Windgegevens niet beschikbaar. Je kunt de melding toch opslaan.'}},()=>{$('gpsState').textContent='Locatie niet beschikbaar; opslaan kan wel.';$('windState').textContent='Zonder GPS kunnen geen windgegevens worden opgehaald.'});
-async function upload(r){if(!db)return false;let row={id:r.id,observed_at:r.ts,intensity:r.intensity,intensity_label:r.label,odor_type:r.odor||null,latitude:r.lat,longitude:r.lon,comment:r.comment||null,wind_speed_kmh:r.windSpeedKmh??null,wind_direction_deg:r.windDirectionDeg??null,wind_direction_compass:r.windDirectionCompass??null,weather_observed_at:r.weatherObservedAt||null,weather_source:r.weatherSource||null};let {error}=await db.from('odor_reports').upsert(row,{onConflict:'id'});return !error}
-$('save').onclick=async()=>{if(level===null)return alert('Kies eerst de intensiteit.');let r={id:crypto.randomUUID(),ts:new Date().toISOString(),intensity:level,label:D[level][0],odor:$('odor').value,lat:coords?.lat??null,lon:coords?.lon??null,comment:$('comment').value.trim(),windSpeedKmh:wind?.windSpeedKmh??null,windDirectionDeg:wind?.windDirectionDeg??null,windDirectionCompass:wind?.windDirectionCompass??null,weatherObservedAt:wind?.weatherObservedAt??null,weatherSource:wind?.weatherSource??null,synced:false};let a=local();a.unshift(r);saveLocal(a);let ok=await upload(r);if(ok){r.synced=true;saveLocal(a)}$('successText').textContent=ok?'De melding en beschikbare windgegevens zijn online opgeslagen.':'De melding is lokaal bewaard en wordt later opnieuw gesynchroniseerd.';reset();show('success')};
-async function syncAll(){let a=local();if(db){for(let r of a)if(!r.synced)r.synced=await upload(r);saveLocal(a);let {data,error}=await db.from('odor_reports').select('*').order('observed_at',{ascending:false});if(!error&&data){let map=new Map(a.map(x=>[x.id,x]));data.forEach(x=>map.set(x.id,{id:x.id,ts:x.observed_at,intensity:x.intensity,label:x.intensity_label,odor:x.odor_type,lat:x.latitude,lon:x.longitude,comment:x.comment,windSpeedKmh:x.wind_speed_kmh,windDirectionDeg:x.wind_direction_deg,windDirectionCompass:x.wind_direction_compass,weatherObservedAt:x.weather_observed_at,weatherSource:x.weather_source,synced:true}));a=[...map.values()].sort((x,y)=>new Date(y.ts)-new Date(x.ts));saveLocal(a)}}render(a)}
-function esc(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function render(a=local()){let l=$('list');l.innerHTML=a.length?'':'<p class="muted">Nog geen meldingen.</p>';a.forEach(r=>{let e=document.createElement('div');e.className='item';e.style.borderColor=D[r.intensity][1];let w=r.windSpeedKmh!=null?`<div class="muted">💨 ${esc(r.windSpeedKmh)} km/u · ${esc(r.windDirectionCompass||'–')}${r.windDirectionDeg!=null?' ('+Math.round(r.windDirectionDeg)+'°)':''}</div>`:'';e.innerHTML=`<b>${new Date(r.ts).toLocaleString('nl-BE')}</b><div>${esc(r.label)}${r.odor?' · '+esc(r.odor):''}</div>${r.comment?'<small>'+esc(r.comment)+'</small>':''}${w}<div class="sync ${r.synced?'ok':'warn'}">${r.synced?'☁ Online':'↻ Wacht op synchronisatie'}</div>`;l.appendChild(e)});let now=new Date();$('today').textContent=a.filter(x=>new Date(x.ts).toDateString()===now.toDateString()).length;$('week').textContent=a.filter(x=>now-new Date(x.ts)<=7*864e5).length;$('max').textContent=a.length?D[Math.max(...a.map(x=>x.intensity))][0]:'–';let c={};a.map(x=>x.odor).filter(Boolean).forEach(x=>c[x]=(c[x]||0)+1);$('common').textContent=Object.keys(c).length?Object.entries(c).sort((x,y)=>y[1]-x[1])[0][0]:'–'}
-$('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
-</script></body></html>
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0f766e">
+
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <title>GeurMonitor</title>
+
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #17211f;
+      background: #f4f7f6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 18px;
+      color: white;
+      background: #0f766e;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .sub,
+    .muted {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .wrap {
+      max-width: 620px;
+      margin: auto;
+      padding: 16px 16px 92px;
+    }
+
+    .card {
+      padding: 16px;
+      margin-bottom: 14px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 3px 16px #0000000d;
+    }
+
+    .hero {
+      padding: 26px 16px;
+      text-align: center;
+    }
+
+    .hero-icon {
+      font-size: 50px;
+    }
+
+    .btn,
+    .big {
+      width: 100%;
+      padding: 15px;
+      margin-top: 12px;
+      font: inherit;
+      font-weight: 800;
+      color: white;
+      background: #0f766e;
+      border: 0;
+      border-radius: 15px;
+      cursor: pointer;
+    }
+
+    .big {
+      padding: 18px;
+      font-size: 18px;
+    }
+
+    .secondary {
+      color: #0f5f59;
+      background: #e7f1ef;
+    }
+
+    .levels {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+
+    .level {
+      padding: 10px 3px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 2px solid transparent;
+      border-radius: 14px;
+      cursor: pointer;
+    }
+
+    .level b {
+      display: block;
+      font-size: 22px;
+    }
+
+    .level.sel {
+      border-color: #111;
+    }
+
+    label {
+      display: block;
+      margin: 13px 0 7px;
+      font-weight: 700;
+    }
+
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      font: inherit;
+      background: white;
+      border: 1px solid #ccd6d3;
+      border-radius: 12px;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .success {
+      padding: 30px 18px;
+      text-align: center;
+    }
+
+    .check {
+      font-size: 48px;
+      color: #078052;
+    }
+
+    .nav {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 5;
+      display: flex;
+      justify-content: center;
+      background: white;
+      border-top: 1px solid #ddd;
+    }
+
+    .nav button {
+      width: min(33.33%, 205px);
+      padding: 13px 4px 17px;
+      color: #61706d;
+      background: white;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      font-weight: 800;
+      color: #0f766e;
+    }
+
+    .item {
+      padding: 10px;
+      margin: 8px 0;
+      background: #f5f8f7;
+      border-left: 6px solid #999;
+      border-radius: 10px;
+    }
+
+    .sync-status {
+      margin-top: 5px;
+      font-size: 12px;
+    }
+
+    .online {
+      color: #08734f;
+    }
+
+    .waiting {
+      color: #9a5b00;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .stat {
+      padding: 12px;
+      background: #f4f8f7;
+      border-radius: 12px;
+    }
+
+    .stat b {
+      display: block;
+      font-size: 22px;
+      color: #0f766e;
+    }
+
+    .notice {
+      font-size: 12px;
+    }
+
+    .topline {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .sync-button {
+      width: auto;
+      padding: 8px 12px;
+      margin: 0;
+    }
+
+    .wind-box {
+      padding: 10px;
+      margin-top: 8px;
+      background: #eef7f5;
+      border-radius: 12px;
+    }
+
+    .wind-report {
+      margin-top: 6px;
+      color: #45615c;
+    }
+
+    @media (max-width: 400px) {
+      .levels {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>🌬️ GeurMonitor</h1>
+  <div class="sub">Online geurhinder registreren</div>
+</header>
+
+<main class="wrap">
+
+  <!-- HOME -->
+
+  <section id="home">
+
+    <div class="card hero">
+
+      <div class="hero-icon">
+        🌬️
+      </div>
+
+      <h2>Geurhinder monitoren</h2>
+
+      <p>
+        Registreer snel een nieuwe waarneming.
+      </p>
+
+      <button class="big" id="new">
+        ＋ Geurhinder toevoegen
+      </button>
+
+    </div>
+
+    <div class="card notice" id="cloudState">
+      Online database controleren…
+    </div>
+
+  </section>
+
+
+  <!-- NIEUWE MELDING -->
+
+  <section id="form" class="hidden">
+
+    <div class="card">
+
+      <h2>Nieuwe geurmelding</h2>
+
+      <label>
+        Intensiteit
+      </label>
+
+      <div
+        class="levels"
+        id="levels">
+      </div>
+
+
+      <label for="odor">
+        Geurtype
+      </label>
+
+      <select id="odor">
+        <option value="">
+          Niet gekozen
+        </option>
+
+        <option>
+          Mest / organisch
+        </option>
+
+        <option>
+          Chemisch
+        </option>
+
+        <option>
+          Verbrand
+        </option>
+
+        <option>
+          Afval
+        </option>
+
+        <option>
+          Andere
+        </option>
+      </select>
+
+
+      <label>
+        Locatie en wind
+      </label>
+
+      <button
+        class="btn secondary"
+        id="gps">
+
+        📍 Huidige locatie gebruiken
+
+      </button>
+
+      <div
+        class="muted"
+        id="gpsState">
+
+        Nog geen locatie.
+
+      </div>
+
+
+      <div
+        class="muted wind-box"
+        id="windState">
+
+        Windgegevens worden automatisch opgehaald nadat de locatie is bepaald.
+
+      </div>
+
+
+      <label for="comment">
+        Opmerking (optioneel)
+      </label>
+
+      <textarea
+        id="comment"
+        maxlength="500"
+        placeholder="Bijvoorbeeld: sterke geur buiten op het terras">
+      </textarea>
+
+
+      <button
+        class="btn"
+        id="save">
+
+        Melding opslaan
+
+      </button>
+
+
+      <button
+        class="btn secondary"
+        id="cancel">
+
+        Annuleren
+
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- BEVESTIGING -->
+
+  <section
+    id="success"
+    class="hidden">
+
+    <div class="card success">
+
+      <div class="check">
+        ✓
+      </div>
+
+      <h2>
+        Melding succesvol opgeslagen
+      </h2>
+
+      <p id="successText">
+        De melding staat online.
+      </p>
+
+      <button
+        class="btn"
+        id="backHome">
+
+        Terug naar hoofdpagina
+
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <!-- MELDINGEN -->
+
+  <section
+    id="reports"
+    class="hidden">
+
+    <div class="card">
+
+      <div class="topline">
+
+        <h2>
+          Meldingen
+        </h2>
+
+        <button
+          class="btn secondary sync-button"
+          id="sync">
+
+          Synchroniseren
+
+        </button>
+
+      </div>
+
+      <div id="list">
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- DASHBOARD -->
+
+  <section
+    id="dashboard"
+    class="hidden">
+
+    <div class="card">
+
+      <h2>
+        Dashboard
+      </h2>
+
+      <div class="stats">
+
+        <div class="stat">
+          <b id="today">
+            0
+          </b>
+          Vandaag
+        </div>
+
+        <div class="stat">
+          <b id="week">
+            0
+          </b>
+          Laatste 7 dagen
+        </div>
+
+        <div class="stat">
+          <b id="max">
+            –
+          </b>
+          Hoogste intensiteit
+        </div>
+
+        <div class="stat">
+          <b id="common">
+            –
+          </b>
+          Meest gemeld
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+
+<!-- NAVIGATIE -->
+
+<nav class="nav">
+
+  <button
+    data-page="home"
+    class="active">
+
+    ⌂
+    <br>
+    Home
+
+  </button>
+
+  <button
+    data-page="reports">
+
+    ☷
+    <br>
+    Meldingen
+
+  </button>
+
+  <button
+    data-page="dashboard">
+
+    ▥
+    <br>
+    Dashboard
+
+  </button>
+
+</nav>
+
+
+<!-- EXTERNE BESTANDEN -->
+
+<script src="config.js"></script>
+
+<script src="weather-module.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+
+<script>
+
+  /*
+   * ======================================================
+   * GEURMONITOR v0.4
+   * ======================================================
+   */
+
+
+  /*
+   * INTENSITEITEN
+   */
+
+  const INTENSITIES = [
+
+    [
+      "Geen",
+      "#4caf50"
+    ],
+
+    [
+      "Licht",
+      "#c9d72e"
+    ],
+
+    [
+      "Matig",
+      "#f5a623"
+    ],
+
+    [
+      "Sterk",
+      "#e84a3c"
+    ],
+
+    [
+      "Zeer sterk",
+      "#7d2b73"
+    ]
+
+  ];
+
+
+  /*
+   * STATUS
+   */
+
+  let selectedIntensity = null;
+
+  let coordinates = null;
+
+  let windData = null;
+
+  let database = null;
+
+  let weatherRequestBusy = false;
+
+
+  /*
+   * HULPFUNCTIE
+   */
+
+  const $ =
+    id => document.getElementById(id);
+
+
+  /*
+   * LOKALE OPSLAG
+   */
+
+  function getLocalReports() {
+
+    try {
+
+      return JSON.parse(
+        localStorage.getItem("geurmonitor") || "[]"
+      );
+
+    }
+    catch (error) {
+
+      console.error(
+        "Lokale gegevens konden niet worden gelezen.",
+        error
+      );
+
+      return [];
+
+    }
+
+  }
+
+
+  function saveLocalReports(reports) {
+
+    localStorage.setItem(
+      "geurmonitor",
+      JSON.stringify(reports)
+    );
+
+  }
+
+
+  /*
+   * SUPABASE CONFIGURATIE
+   */
+
+  function isSupabaseConfigured() {
+
+    const config =
+      window.GEURMONITOR_CONFIG || {};
+
+    return Boolean(
+
+      config.supabaseUrl &&
+
+      !config.supabaseUrl.startsWith("VUL_") &&
+
+      config.supabaseAnonKey &&
+
+      !config.supabaseAnonKey.startsWith("VUL_")
+
+    );
+
+  }
+
+
+  if (isSupabaseConfigured()) {
+
+    const config =
+      window.GEURMONITOR_CONFIG;
+
+    database =
+      supabase.createClient(
+
+        config.supabaseUrl,
+
+        config.supabaseAnonKey
+
+      );
+
+
+    $("cloudState").innerHTML =
+
+      "☁️ <b>Online opslag actief</b>. " +
+
+      "Niet-gesynchroniseerde meldingen blijven ook lokaal bewaard.";
+
+  }
+  else {
+
+    $("cloudState").innerHTML =
+
+      "⚠️ <b>Online opslag nog niet ingesteld.</b> " +
+
+      "Voorlopig worden meldingen alleen lokaal opgeslagen.";
+
+  }
+
+
+  /*
+   * PAGINANAVIGATIE
+   */
+
+  function showPage(pageId) {
+
+    document
+      .querySelectorAll("main section")
+      .forEach(section => {
+
+        section.classList.add("hidden");
+
+      });
+
+
+    $(pageId)
+      .classList
+      .remove("hidden");
+
+
+    document
+      .querySelectorAll(".nav button")
+      .forEach(button => {
+
+        button.classList.toggle(
+
+          "active",
+
+          button.dataset.page === pageId
+
+        );
+
+      });
+
+
+    if (
+      pageId === "reports" ||
+      pageId === "dashboard"
+    ) {
+
+      synchronizeAll();
+
+    }
+
+  }
+
+
+  /*
+   * INTENSITEITSKNOPPEN
+   */
+
+  INTENSITIES.forEach(
+
+    (definition, index) => {
+
+      const button =
+        document.createElement("button");
+
+
+      button.className =
+        "level";
+
+
+      button.type =
+        "button";
+
+
+      button.style.background =
+        definition[1] + "26";
+
+
+      button.innerHTML =
+        `<b>${index}</b>${definition[0]}`;
+
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          selectedIntensity =
+            index;
+
+
+          document
+            .querySelectorAll(".level")
+            .forEach(element => {
+
+              element.classList.remove("sel");
+
+            });
+
+
+          button
+            .classList
+            .add("sel");
+
+        }
+      );
+
+
+      $("levels")
+        .appendChild(button);
+
+    }
+
+  );
+
+
+  /*
+   * FORMULIER RESETTEN
+   */
+
+  function resetForm() {
+
+    selectedIntensity =
+      null;
+
+    coordinates =
+      null;
+
+    windData =
+      null;
+
+    weatherRequestBusy =
+      false;
+
+
+    document
+      .querySelectorAll(".level")
+      .forEach(element => {
+
+        element.classList.remove("sel");
+
+      });
+
+
+    $("odor").value =
+      "";
+
+
+    $("comment").value =
+      "";
+
+
+    $("gpsState").textContent =
+      "Nog geen locatie.";
+
+
+    $("windState").textContent =
+
+      "Windgegevens worden automatisch opgehaald nadat de locatie is bepaald.";
+
+
+    $("gps").disabled =
+      false;
+
+
+    $("save").disabled =
+      false;
+
+  }
+
+
+  /*
+   * NIEUWE MELDING
+   */
+
+  $("new").addEventListener(
+    "click",
+    () => {
+
+      resetForm();
+
+      showPage("form");
+
+    }
+  );
+
+
+  /*
+   * ANNULEREN
+   */
+
+  $("cancel").addEventListener(
+    "click",
+    () => {
+
+      resetForm();
+
+      showPage("home");
+
+    }
+  );
+
+
+  /*
+   * TERUG NAAR HOME
+   */
+
+  $("backHome").addEventListener(
+    "click",
+    () => {
+
+      showPage("home");
+
+    }
+  );
+
+
+  /*
+   * GPS + WINDGEGEVENS
+   */
+
+  $("gps").addEventListener(
+    "click",
+    () => {
+
+      if (!navigator.geolocation) {
+
+        $("gpsState").textContent =
+
+          "GPS wordt niet ondersteund op dit toestel.";
+
+
+        $("windState").textContent =
+
+          "Zonder locatie kunnen geen windgegevens worden opgehaald.";
+
+
+        return;
+
+      }
+
+
+      $("gps").disabled =
+        true;
+
+
+      $("gpsState").textContent =
+
+        "📍 Locatie bepalen…";
+
+
+      navigator.geolocation.getCurrentPosition(
+
+        async position => {
+
+          coordinates = {
+
+            lat:
+              position.coords.latitude,
+
+            lon:
+              position.coords.longitude
+
+          };
+
+
+          $("gpsState").textContent =
+
+            "✓ Locatie bepaald";
+
+
+          $("windState").textContent =
+
+            "💨 Windgegevens ophalen…";
+
+
+          weatherRequestBusy =
+            true;
+
+
+          try {
+
+            windData =
+              await fetchWindForLocation(
+
+                coordinates.lat,
+
+                coordinates.lon
+
+              );
+
+
+            const windSpeed =
+
+              windData.windSpeedKmh ?? "–";
+
+
+            const windDirection =
+
+              windData.windDirectionCompass ?? "–";
+
+
+            const degrees =
+
+              windData.windDirectionDeg === null ||
+
+              windData.windDirectionDeg === undefined
+
+                ? "–"
+
+                : `${Math.round(
+                    windData.windDirectionDeg
+                  )}°`;
+
+
+            $("windState").textContent =
+
+              `💨 ${windSpeed} km/u · ` +
+
+              `${windDirection} (${degrees})`;
+
+          }
+          catch (error) {
+
+            console.error(
+
+              "Windgegevens konden niet worden opgehaald.",
+
+              error
+
+            );
+
+
+            windData =
+              null;
+
+
+            $("windState").textContent =
+
+              "Windgegevens niet beschikbaar. " +
+
+              "Je kunt de melding toch opslaan.";
+
+          }
+          finally {
+
+            weatherRequestBusy =
+              false;
+
+
+            $("gps").disabled =
+              false;
+
+          }
+
+        },
+
+
+        error => {
+
+          console.error(
+
+            "Locatie kon niet worden bepaald.",
+
+            error
+
+          );
+
+
+          coordinates =
+            null;
+
+
+          windData =
+            null;
+
+
+          $("gpsState").textContent =
+
+            "Locatie niet beschikbaar. Opslaan kan wel.";
+
+
+          $("windState").textContent =
+
+            "Zonder GPS kunnen geen windgegevens worden opgehaald.";
+
+
+          $("gps").disabled =
+            false;
+
+        },
+
+
+        {
+
+          enableHighAccuracy:
+            true,
+
+          timeout:
+            15000,
+
+          maximumAge:
+            60000
+
+        }
+
+      );
+
+    }
+
+  );
+
+
+  /*
+   * MELDING NAAR SUPABASE STUREN
+   */
+
+  async function uploadReport(report) {
+
+    if (!database) {
+
+      return false;
+
+    }
+
+
+    const onlineRow = {
+
+      id:
+        report.id,
+
+      observed_at:
+        report.ts,
+
+      intensity:
+        report.intensity,
+
+      intensity_label:
+        report.label,
+
+      odor_type:
+        report.odor || null,
+
+      latitude:
+        report.lat,
+
+      longitude:
+        report.lon,
+
+      comment:
+        report.comment || null,
+
+
+      wind_speed_kmh:
+        report.windSpeedKmh ?? null,
+
+
+      wind_direction_deg:
+        report.windDirectionDeg ?? null,
+
+
+      wind_direction_compass:
+        report.windDirectionCompass ?? null,
+
+
+      weather_observed_at:
+        report.weatherObservedAt || null,
+
+
+      weather_source:
+        report.weatherSource || null
+
+    };
+
+
+    const { error } =
+
+      await database
+
+        .from("odor_reports")
+
+        .upsert(
+
+          onlineRow,
+
+          {
+            onConflict:
+              "id"
+          }
+
+        );
+
+
+    if (error) {
+
+      console.error(
+
+        "Supabase synchronisatiefout:",
+
+        error
+
+      );
+
+
+      return false;
+
+    }
+
+
+    return true;
+
+  }
+
+
+  /*
+   * MELDING OPSLAAN
+   */
+
+  $("save").addEventListener(
+
+    "click",
+
+    async () => {
+
+
+      if (
+        selectedIntensity === null
+      ) {
+
+        alert(
+          "Kies eerst de intensiteit."
+        );
+
+        return;
+
+      }
+
+
+      if (weatherRequestBusy) {
+
+        alert(
+
+          "De windgegevens worden nog opgehaald. " +
+
+          "Probeer opnieuw zodra de windgegevens zichtbaar zijn."
+
+        );
+
+        return;
+
+      }
+
+
+      $("save").disabled =
+        true;
+
+
+      $("save").textContent =
+        "Opslaan…";
+
+
+      const report = {
+
+        id:
+          crypto.randomUUID(),
+
+        ts:
+          new Date().toISOString(),
+
+
+        intensity:
+          selectedIntensity,
+
+        label:
+          INTENSITIES[
+            selectedIntensity
+          ][0],
+
+
+        odor:
+          $("odor").value,
+
+
+        lat:
+          coordinates?.lat ?? null,
+
+        lon:
+          coordinates?.lon ?? null,
+
+
+        comment:
+          $("comment")
+            .value
+            .trim(),
+
+
+        windSpeedKmh:
+          windData?.windSpeedKmh ?? null,
+
+
+        windDirectionDeg:
+          windData?.windDirectionDeg ?? null,
+
+
+        windDirectionCompass:
+          windData?.windDirectionCompass ?? null,
+
+
+        weatherObservedAt:
+          windData?.weatherObservedAt ?? null,
+
+
+        weatherSource:
+          windData?.weatherSource ?? null,
+
+
+        synced:
+          false
+
+      };
+
+
+      const reports =
+        getLocalReports();
+
+
+      reports.unshift(
+        report
+      );
+
+
+      saveLocalReports(
+        reports
+      );
+
+
+      const uploaded =
+
+        await uploadReport(
+          report
+        );
+
+
+      if (uploaded) {
+
+        report.synced =
+          true;
+
+
+        saveLocalReports(
+          reports
+        );
+
+      }
+
+
+      $("successText").textContent =
+
+        uploaded
+
+          ? "De melding en de beschikbare windgegevens zijn online opgeslagen."
+
+          : "De melding is lokaal bewaard en wordt later opnieuw gesynchroniseerd.";
+
+
+      $("save").textContent =
+        "Melding opslaan";
+
+
+      $("save").disabled =
+        false;
+
+
+      resetForm();
+
+
+      showPage(
+        "success"
+      );
+
+    }
+
+  );
+
+
+  /*
+   * SYNCHRONISEREN
+   */
+
+  async function synchronizeAll() {
+
+    let reports =
+      getLocalReports();
+
+
+    if (database) {
+
+      /*
+       * Eerst lokale,
+       * nog niet gesynchroniseerde
+       * meldingen uploaden
+       */
+
+      for (
+        const report
+        of reports
+      ) {
+
+        if (!report.synced) {
+
+          report.synced =
+
+            await uploadReport(
+              report
+            );
+
+        }
+
+      }
+
+
+      saveLocalReports(
+        reports
+      );
+
+
+      /*
+       * Daarna online meldingen ophalen
+       */
+
+      const {
+        data,
+        error
+      } =
+
+        await database
+
+          .from(
+            "odor_reports"
+          )
+
+          .select("*")
+
+          .order(
+
+            "observed_at",
+
+            {
+              ascending:
+                false
+            }
+
+          );
+
+
+      if (
+        !error &&
+        data
+      ) {
+
+        const reportsById =
+
+          new Map(
+
+            reports.map(
+
+              report => [
+
+                report.id,
+
+                report
+
+              ]
+
+            )
+
+          );
+
+
+        data.forEach(
+          row => {
+
+            reportsById.set(
+
+              row.id,
+
+              {
+
+                id:
+                  row.id,
+
+
+                ts:
+                  row.observed_at,
+
+
+                intensity:
+                  row.intensity,
+
+
+                label:
+                  row.intensity_label,
+
+
+                odor:
+                  row.odor_type,
+
+
+                lat:
+                  row.latitude,
+
+
+                lon:
+                  row.longitude,
+
+
+                comment:
+                  row.comment,
+
+
+                windSpeedKmh:
+                  row.wind_speed_kmh,
+
+
+                windDirectionDeg:
+                  row.wind_direction_deg,
+
+
+                windDirectionCompass:
+                  row.wind_direction_compass,
+
+
+                weatherObservedAt:
+                  row.weather_observed_at,
+
+
+                weatherSource:
+                  row.weather_source,
+
+
+                synced:
+                  true
+
+              }
+
+            );
+
+          }
+
+        );
+
+
+        reports =
+
+          [...reportsById.values()]
+
+            .sort(
+
+              (first, second) =>
+
+                new Date(
+                  second.ts
+                ) -
+
+                new Date(
+                  first.ts
+                )
+
+            );
+
+
+        saveLocalReports(
+          reports
+        );
+
+      }
+
+
+      if (error) {
+
+        console.error(
+
+          "Online meldingen konden niet worden opgehaald.",
+
+          error
+
+        );
+
+      }
+
+    }
+
+
+    renderReports(
+      reports
+    );
+
+  }
+
+
+  /*
+   * HTML VEILIG WEERGEVEN
+   */
+
+  function escapeHtml(value) {
+
+    return String(
+      value || ""
+    ).replace(
+
+      /[&<>"]/g,
+
+      character => ({
+
+        "&":
+          "&amp;",
+
+        "<":
+          "&lt;",
+
+        ">":
+          "&gt;",
+
+        '"':
+          "&quot;"
+
+      })[character]
+
+    );
+
+  }
+
+
+  /*
+   * MELDINGEN TONEN
+   */
+
+  function renderReports(
+
+    reports =
+      getLocalReports()
+
+  ) {
+
+    const list =
+      $("list");
+
+
+    list.innerHTML =
+
+      reports.length
+
+        ? ""
+
+        : '<p class="muted">Nog geen meldingen.</p>';
+
+
+    reports.forEach(
+      report => {
+
+        const item =
+
+          document.createElement(
+            "div"
+          );
+
+
+        item.className =
+          "item";
+
+
+        const intensityDefinition =
+
+          INTENSITIES[
+            report.intensity
+          ] ||
+
+          [
+            "Onbekend",
+            "#999"
+          ];
+
+
+        item.style.borderColor =
+
+          intensityDefinition[1];
+
+
+        /*
+         * Windinformatie
+         */
+
+        let windHtml =
+          "";
+
+
+        if (
+
+          report.windSpeedKmh !== null &&
+
+          report.windSpeedKmh !== undefined
+
+        ) {
+
+          const direction =
+
+            escapeHtml(
+
+              report.windDirectionCompass ||
+              "–"
+
+            );
+
+
+          const degrees =
+
+            report.windDirectionDeg !== null &&
+
+            report.windDirectionDeg !== undefined
+
+              ? ` (${Math.round(
+                  report.windDirectionDeg
+                )}°)`
+
+              : "";
+
+
+          windHtml =
+
+            `<div class="muted wind-report">` +
+
+            `💨 ${escapeHtml(
+              report.windSpeedKmh
+            )} km/u · ` +
+
+            `${direction}${degrees}` +
+
+            `</div>`;
+
+        }
+
+
+        const reportDate =
+
+          new Date(
+            report.ts
+          )
+
+            .toLocaleString(
+              "nl-BE"
+            );
+
+
+        const odorHtml =
+
+          report.odor
+
+            ? ` · ${escapeHtml(
+                report.odor
+              )}`
+
+            : "";
+
+
+        const commentHtml =
+
+          report.comment
+
+            ? `<div><small>${escapeHtml(
+                report.comment
+              )}</small></div>`
+
+            : "";
+
+
+        const synchronizationClass =
+
+          report.synced
+
+            ? "online"
+
+            : "waiting";
+
+
+        const synchronizationText =
+
+          report.synced
+
+            ? "☁ Online"
+
+            : "↻ Wacht op synchronisatie";
+
+
+        item.innerHTML = `
+
+          <b>
+            ${reportDate}
+          </b>
+
+          <div>
+
+            ${escapeHtml(
+              report.label
+            )}
+
+            ${odorHtml}
+
+          </div>
+
+          ${commentHtml}
+
+          ${windHtml}
+
+          <div class="sync-status ${synchronizationClass}">
+
+            ${synchronizationText}
+
+          </div>
+
+        `;
+
+
+        list.appendChild(
+          item
+        );
+
+      }
+
+    );
+
+
+    updateDashboard(
+      reports
+    );
+
+  }
+
+
+  /*
+   * DASHBOARD
+   */
+
+  function updateDashboard(
+    reports
+  ) {
+
+    const now =
+      new Date();
+
+
+    /*
+     * Vandaag
+     */
+
+    $("today").textContent =
+
+      reports.filter(
+
+        report =>
+
+          new Date(
+            report.ts
+          ).toDateString()
+
+          ===
+
+          now.toDateString()
+
+      ).length;
+
+
+    /*
+     * Laatste 7 dagen
+     */
+
+    $("week").textContent =
+
+      reports.filter(
+
+        report =>
+
+          now -
+
+          new Date(
+            report.ts
+          )
+
+          <=
+
+          7 *
+          24 *
+          60 *
+          60 *
+          1000
+
+      ).length;
+
+
+    /*
+     * Hoogste intensiteit
+     */
+
+    $("max").textContent =
+
+      reports.length
+
+        ? INTENSITIES[
+
+            Math.max(
+
+              ...reports.map(
+
+                report =>
+                  report.intensity
+
+              )
+
+            )
+
+          ][0]
+
+        : "–";
+
+
+    /*
+     * Meest gemelde geur
+     */
+
+    const odorCounts =
+      {};
+
+
+    reports
+
+      .map(
+        report =>
+          report.odor
+      )
+
+      .filter(Boolean)
+
+      .forEach(
+        odor => {
+
+          odorCounts[odor] =
+
+            (
+              odorCounts[odor] ||
+              0
+            ) + 1;
+
+        }
+      );
+
+
+    $("common").textContent =
+
+      Object.keys(
+        odorCounts
+      ).length
+
+        ? Object.entries(
+            odorCounts
+          )
+
+            .sort(
+
+              (
+                first,
+                second
+              ) =>
+
+                second[1] -
+                first[1]
+
+            )[0][0]
+
+        : "–";
+
+  }
+
+
+  /*
+   * SYNCHRONISATIEKNOP
+   */
+
+  $("sync").addEventListener(
+
+    "click",
+
+    synchronizeAll
+
+  );
+
+
+  /*
+   * ONDERSTE NAVIGATIE
+   */
+
+  document
+    .querySelectorAll(
+      ".nav button"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+
+          "click",
+
+          () => {
+
+            showPage(
+              button.dataset.page
+            );
+
+          }
+
+        );
+
+      }
+    );
+
+
+  /*
+   * EERSTE WEERGAVE
+   */
+
+  renderReports();
+
+
+  /*
+   * PWA SERVICE WORKER
+   */
+
+  if (
+    "serviceWorker"
+    in navigator
+  ) {
+
+    navigator
+      .serviceWorker
+      .register(
+        "./sw.js"
+      );
+
+  }
+
+</script>
+
+</body>
+
+</html>
