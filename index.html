@@ -51,7 +51,18 @@
 <script>
 const D=[['Geen','#4caf50'],['Licht','#c9d72e'],['Matig','#f5a623'],['Sterk','#e84a3c'],['Zeer sterk','#7d2b73']];
 let level=null,coords=null,wind=null,db=null,timeMode='now',windLoading=false,selectedOdor='',currentUser=null;
-const $=id=>document.getElementById(id);const local=()=>{try{return JSON.parse(localStorage.getItem('geurmonitor')||'[]')}catch{return []}};const saveLocal=a=>localStorage.setItem('geurmonitor',JSON.stringify(a));
+const $=id=>document.getElementById(id);
+const storageKey=()=>currentUser?`geurmonitor:${currentUser.id}`:'geurmonitor:guest';
+
+const local=()=>{
+  try{
+    return JSON.parse(localStorage.getItem(storageKey())||'[]')
+  }catch{
+    return []
+  }
+};
+
+const saveLocal=a=>localStorage.setItem(storageKey(),JSON.stringify(a));
 function configured(){const c=window.GEURMONITOR_CONFIG||{};return c.supabaseUrl&&!c.supabaseUrl.startsWith('VUL_')&&c.supabaseAnonKey&&!c.supabaseAnonKey.startsWith('VUL_')}
 if(configured()){const c=window.GEURMONITOR_CONFIG;db=supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);$('cloudState').innerHTML='☁️ <b>Online opslag actief</b>. Niet-gesynchroniseerde meldingen blijven lokaal bewaard.'}else{$('cloudState').innerHTML='⚠️ <b>Online opslag niet ingesteld.</b> Voorlopig wordt lokaal opgeslagen.'}
 function updateAuthUI(){
