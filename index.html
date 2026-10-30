@@ -27,14 +27,17 @@
 
   <p id="loginMessage" class="muted"></p>
 </section> 
+
 <section id="home">
+<div class="card hero"><div class="heroIcon">🌬️</div><h2>Geurhinder monitoren</h2><p>Kies hoe je de waarneming wilt registreren.</p><div class="homeActions"><button class="big" id="newNow">＋ Nu geurhinder registreren</button><button class="big earlierAction" id="newEarlier">🕘 Eerdere waarneming registreren</button></div></div><div class="card notice" id="cloudState">Online database controleren…</div>
 <div id="accountInfo" class="card hidden">
   <div class="muted">👤 Aangemeld als</div>
   <b id="accountEmail"></b>
   <button id="logoutBtn" class="btn secondary" type="button">Uitloggen</button>
 </div>
-<div class="card hero"><div class="heroIcon">🌬️</div><h2>Geurhinder monitoren</h2><p>Kies hoe je de waarneming wilt registreren.</p><div class="homeActions"><button class="big" id="newNow">＋ Nu geurhinder registreren</button><button class="big earlierAction" id="newEarlier">🕘 Eerdere waarneming registreren</button></div></div><div class="card notice" id="cloudState">Online database controleren…</div></section>
-<section id="form" class="hidden"><div class="card"><h2>Nieuwe geurmelding</h2>
+</section>
+
+ <section id="form" class="hidden"><div class="card"><h2>Nieuwe geurmelding</h2>
 <div id="modeTitle" class="box"><b>Registratie op dit moment</b></div>
 <div id="earlierBox" class="box hidden"><div class="fields"><div><label for="observedDate">Datum</label><input id="observedDate" type="date"></div><div><label for="observedTime">Tijd</label><input id="observedTime" type="time"></div></div><p class="muted">Kies het werkelijke moment waarop je de geur hebt waargenomen.</p></div>
 <label>Intensiteit</label><div class="levels" id="levels"></div>
