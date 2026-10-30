@@ -30,10 +30,21 @@
 <script src="config.js"></script><script src="weather-module.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const D=[['Geen','#4caf50'],['Licht','#c9d72e'],['Matig','#f5a623'],['Sterk','#e84a3c'],['Zeer sterk','#7d2b73']];
-let level=null,coords=null,wind=null,db=null,timeMode='now',windLoading=false,selectedOdor='';
+let level=null,coords=null,wind=null,db=null,timeMode='now',windLoading=false,selectedOdor='',currentUser=null;
 const $=id=>document.getElementById(id);const local=()=>{try{return JSON.parse(localStorage.getItem('geurmonitor')||'[]')}catch{return []}};const saveLocal=a=>localStorage.setItem('geurmonitor',JSON.stringify(a));
 function configured(){const c=window.GEURMONITOR_CONFIG||{};return c.supabaseUrl&&!c.supabaseUrl.startsWith('VUL_')&&c.supabaseAnonKey&&!c.supabaseAnonKey.startsWith('VUL_')}
 if(configured()){const c=window.GEURMONITOR_CONFIG;db=supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);$('cloudState').innerHTML='☁️ <b>Online opslag actief</b>. Niet-gesynchroniseerde meldingen blijven lokaal bewaard.'}else{$('cloudState').innerHTML='⚠️ <b>Online opslag niet ingesteld.</b> Voorlopig wordt lokaal opgeslagen.'}
+async function checkAuth(){
+  if(!db)return;
+  const {data,error}=await db.auth.getSession();
+  if(error){
+    console.error("AUTH TEST:",error);
+    return;
+  }
+  currentUser=data.session?.user||null;
+  console.log("AUTH TEST:",currentUser?"ingelogd":"niet ingelogd",currentUser?.email||"");
+}
+checkAuth();
 function show(id){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='reports'||id==='dashboard')syncAll()}
 document.querySelectorAll('.odorTile').forEach(button=>{button.onclick=()=>{const name=button.dataset.odor;document.querySelectorAll('.odorTile').forEach(tile=>tile.classList.remove('sel'));button.classList.add('sel');if(name==='Andere geur'){selectedOdor='';$('otherOdorBox').classList.remove('hidden');$('otherOdor').focus()}else{selectedOdor=name;$('otherOdor').value='';$('otherOdorBox').classList.add('hidden')}}});
 D.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.className='level';b.style.background=d[1]+'26';b.innerHTML=`<b>${i}</b>${d[0]}`;b.onclick=()=>{level=i;document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};$('levels').appendChild(b)});
