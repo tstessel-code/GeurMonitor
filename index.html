@@ -13,6 +13,20 @@
 <body>
 <header><h1>🌬️ GeurMonitor</h1><div class="sub">Online geurhinder registreren</div></header>
 <main class="wrap">
+ <section id="loginSection" class="card">
+  <h2>Aanmelden</h2>
+  <p class="muted">Meld je aan bij GeurMonitor.</p>
+
+  <label for="loginEmail">E-mailadres</label>
+  <input id="loginEmail" type="email" autocomplete="username">
+
+  <label for="loginPassword">Wachtwoord</label>
+  <input id="loginPassword" type="password" autocomplete="current-password">
+
+  <button id="loginBtn" class="btn" type="button">Aanmelden</button>
+
+  <p id="loginMessage" class="muted"></p>
+</section> 
 <section id="home"><div class="card hero"><div class="heroIcon">🌬️</div><h2>Geurhinder monitoren</h2><p>Kies hoe je de waarneming wilt registreren.</p><div class="homeActions"><button class="big" id="newNow">＋ Nu geurhinder registreren</button><button class="big earlierAction" id="newEarlier">🕘 Eerdere waarneming registreren</button></div></div><div class="card notice" id="cloudState">Online database controleren…</div></section>
 <section id="form" class="hidden"><div class="card"><h2>Nieuwe geurmelding</h2>
 <div id="modeTitle" class="box"><b>Registratie op dit moment</b></div>
@@ -45,6 +59,37 @@ async function checkAuth(){
   console.log("AUTH TEST:",currentUser?"ingelogd":"niet ingelogd",currentUser?.email||"");
 }
 checkAuth();
+ async function login(){
+  if(!db)return;
+
+  const email=$('loginEmail').value.trim();
+  const password=$('loginPassword').value;
+
+  if(!email || !password){
+    $('loginMessage').textContent='Vul je e-mailadres en wachtwoord in.';
+    return;
+  }
+
+  $('loginMessage').textContent='Aanmelden...';
+
+  const {data,error}=await db.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if(error){
+    console.error('LOGIN ERROR:',error);
+    $('loginMessage').textContent='Aanmelden mislukt. Controleer je gegevens.';
+    return;
+  }
+
+  currentUser=data.user;
+  $('loginMessage').textContent='Aangemeld als '+currentUser.email;
+  console.log('LOGIN OK:',currentUser.email);
+}
+
+$('loginBtn').onclick=login;
+ 
 function show(id){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='reports'||id==='dashboard')syncAll()}
 document.querySelectorAll('.odorTile').forEach(button=>{button.onclick=()=>{const name=button.dataset.odor;document.querySelectorAll('.odorTile').forEach(tile=>tile.classList.remove('sel'));button.classList.add('sel');if(name==='Andere geur'){selectedOdor='';$('otherOdorBox').classList.remove('hidden');$('otherOdor').focus()}else{selectedOdor=name;$('otherOdor').value='';$('otherOdorBox').classList.add('hidden')}}});
 D.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.className='level';b.style.background=d[1]+'26';b.innerHTML=`<b>${i}</b>${d[0]}`;b.onclick=()=>{level=i;document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};$('levels').appendChild(b)});
