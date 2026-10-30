@@ -59,26 +59,25 @@ function updateAuthUI(){
 
   $('loginSection').classList.toggle('hidden',loggedIn);
 
-  document.querySelectorAll('main section').forEach(section=>{
-    if(section.id!=='loginSection'){
-      section.classList.toggle('hidden',!loggedIn);
-    }
-  });
+  if(!loggedIn){
+    document.querySelectorAll('main section').forEach(section=>{
+      if(section.id!=='loginSection'){
+        section.classList.add('hidden');
+      }
+    });
+  }
 
   const nav=document.querySelector('.nav');
   if(nav)nav.classList.toggle('hidden',!loggedIn);
+
+  if(loggedIn){
+    $('accountInfo').classList.remove('hidden');
+    $('accountEmail').textContent=currentUser.email;
+  }else{
+    $('accountInfo').classList.add('hidden');
+    $('accountEmail').textContent='';
+  }
 }
-function updateAuthUI(){
-  const loggedIn=!!currentUser;
-
-  $('loginSection').classList.toggle('hidden',loggedIn);
-
-  document.querySelectorAll('main section').forEach(section=>{
-    if(section.id!=='loginSection'){
-      section.classList.toggle('hidden',!loggedIn);
-    }
-  });
-
   const nav=document.querySelector('.nav');
   if(nav)nav.classList.toggle('hidden',!loggedIn);
 
