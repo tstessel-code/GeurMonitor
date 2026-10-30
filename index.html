@@ -78,17 +78,6 @@ function updateAuthUI(){
     $('accountEmail').textContent='';
   }
 }
-  const nav=document.querySelector('.nav');
-  if(nav)nav.classList.toggle('hidden',!loggedIn);
-
-  if(loggedIn){
-    $('accountInfo').classList.remove('hidden');
-    $('accountEmail').textContent=currentUser.email;
-  }else{
-    $('accountInfo').classList.add('hidden');
-    $('accountEmail').textContent='';
-  }
-}
 async function checkAuth(){
   if(!db)return;
   const {data,error}=await db.auth.getSession();
@@ -99,6 +88,10 @@ async function checkAuth(){
   currentUser=data.session?.user||null;
   console.log("AUTH TEST:",currentUser?"ingelogd":"niet ingelogd",currentUser?.email||"");
  updateAuthUI();
+
+ if(currentUser){
+  show('home');
+ }
 }
 checkAuth();
  async function login(){
