@@ -48,6 +48,20 @@ let level=null,coords=null,wind=null,db=null,timeMode='now',windLoading=false,se
 const $=id=>document.getElementById(id);const local=()=>{try{return JSON.parse(localStorage.getItem('geurmonitor')||'[]')}catch{return []}};const saveLocal=a=>localStorage.setItem('geurmonitor',JSON.stringify(a));
 function configured(){const c=window.GEURMONITOR_CONFIG||{};return c.supabaseUrl&&!c.supabaseUrl.startsWith('VUL_')&&c.supabaseAnonKey&&!c.supabaseAnonKey.startsWith('VUL_')}
 if(configured()){const c=window.GEURMONITOR_CONFIG;db=supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);$('cloudState').innerHTML='☁️ <b>Online opslag actief</b>. Niet-gesynchroniseerde meldingen blijven lokaal bewaard.'}else{$('cloudState').innerHTML='⚠️ <b>Online opslag niet ingesteld.</b> Voorlopig wordt lokaal opgeslagen.'}
+function updateAuthUI(){
+  const loggedIn=!!currentUser;
+
+  $('loginSection').classList.toggle('hidden',loggedIn);
+
+  document.querySelectorAll('main section').forEach(section=>{
+    if(section.id!=='loginSection'){
+      section.classList.toggle('hidden',!loggedIn);
+    }
+  });
+
+  const nav=document.querySelector('.nav');
+  if(nav)nav.classList.toggle('hidden',!loggedIn);
+}
 async function checkAuth(){
   if(!db)return;
   const {data,error}=await db.auth.getSession();
@@ -57,6 +71,7 @@ async function checkAuth(){
   }
   currentUser=data.session?.user||null;
   console.log("AUTH TEST:",currentUser?"ingelogd":"niet ingelogd",currentUser?.email||"");
+ updateAuthUI();
 }
 checkAuth();
  async function login(){
@@ -86,6 +101,8 @@ checkAuth();
   currentUser=data.user;
   $('loginMessage').textContent='Aangemeld als '+currentUser.email;
   console.log('LOGIN OK:',currentUser.email);
+  updateAuthUI();
+  show('home');
 }
 
 $('loginBtn').onclick=login;
