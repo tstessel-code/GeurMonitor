@@ -153,7 +153,14 @@ body.app-loading > nav {
   line-height:1;
   cursor:pointer;
 }
-  
+.deleteConfirmBtn{
+  background:#c62828;
+  color:#fff;
+}
+
+.deleteConfirmBtn:hover{
+  background:#a91f1f;
+}  
 </style>
 </head>
 <body class="app-loading">
@@ -226,6 +233,25 @@ body.app-loading > nav {
     </button>
 
     <p id="endTimeMessage" class="muted"></p>
+  </div>
+</div>
+<div id="deleteModal" class="gmModal hidden">
+  <div class="gmModalCard">
+    <h2>Melding verwijderen</h2>
+
+    <p>
+      Weet je zeker dat je deze melding definitief wilt verwijderen?
+    </p>
+
+    <button id="confirmDeleteBtn" class="btn deleteConfirmBtn" type="button">
+      🗑️ Verwijderen
+    </button>
+
+    <button id="cancelDeleteBtn" class="btn secondary" type="button">
+      Annuleren
+    </button>
+
+    <p id="deleteMessage" class="muted"></p>
   </div>
 </div>
 <nav class="nav"><button data-page="home" class="active">⌂<br>Home</button><button data-page="reports">☷<br>Meldingen</button><button data-page="dashboard">▥<br>Dashboard</button></nav>
@@ -523,6 +549,11 @@ const deleteInfo=canDeleteReport(r.createdAt)
     openEndTimeEditor(button.dataset.endReport);
   };
 });
+document.querySelectorAll('[data-delete-report]').forEach(button=>{
+  button.onclick=()=>{
+    openDeleteModal(button.dataset.deleteReport);
+  };
+});
 }
 let endTimeReportId=null;
 
@@ -619,6 +650,25 @@ $('cancelEndTimeBtn').onclick=()=>{
   $('endTimeMessage').textContent='';
   endTimeReportId=null;
 };
+let deleteReportId=null;
+
+function openDeleteModal(reportId){
+  const reports=local();
+  const r=reports.find(x=>x.id===reportId);
+
+  if(!r)return;
+
+  if(!canDeleteReport(r.createdAt)){
+    alert('De periode om deze melding te verwijderen is verstreken.');
+    render();
+    return;
+  }
+
+  deleteReportId=reportId;
+
+  $('deleteMessage').textContent='';
+  $('deleteModal').classList.remove('hidden');
+}
 $('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
 </body></html>
