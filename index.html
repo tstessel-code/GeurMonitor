@@ -402,8 +402,12 @@ function formatDuration(startValue,endValue){
   return `${minutes} min`;
 }
 
-function remainingEndTime(createdAt){
-  const deadline=new Date(createdAt).getTime()+(24*60*60*1000);
+function remainingEndTime(observedAt){
+  const observed=new Date(observedAt).getTime();
+
+  if(Number.isNaN(observed))return null;
+
+  const deadline=observed+(24*60*60*1000);
   const remaining=deadline-Date.now();
 
   if(remaining<=0)return null;
@@ -480,8 +484,8 @@ function render(a=local()){
 
     // Bij elke eigen melding zonder eindtijd bekijken we
 // of de 24-uursperiode nog actief is.
-else if(r.createdAt){
-  const remaining=remainingEndTime(r.createdAt);
+else if(r.ts){
+  const remaining=remainingEndTime(r.ts);
 
   if(remaining){
     endInfo=`
