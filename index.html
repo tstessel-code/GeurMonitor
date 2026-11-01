@@ -81,6 +81,13 @@ body.app-loading > nav {
   width:100%;
   box-sizing:border-box;
 }
+  .gmModalCard input[type="datetime-local"]{
+  display:block;
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+  margin:8px 0 14px 0;
+}
 </style>
 </head>
 <body class="app-loading">
@@ -448,9 +455,16 @@ function openEndTimeEditor(reportId){
 
   endTimeReportId=reportId;
 
-  $('customEndTime').value=localDateTimeValue(new Date());
-  $('endTimeMessage').textContent='';
+  const endInput=$('customEndTime');
+  const now=new Date();
+  const observed=new Date(r.ts);
 
+  endInput.min=localDateTimeValue(observed);
+  endInput.max=localDateTimeValue(now);
+  endInput.value=localDateTimeValue(now);
+  
+  $('endTimeMessage').textContent='';
+  
   $('endTimeModal').classList.remove('hidden');
 }
   async function saveEndTime(endDate){
