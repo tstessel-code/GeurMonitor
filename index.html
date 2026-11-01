@@ -453,6 +453,70 @@ function openEndTimeEditor(reportId){
 
   $('endTimeModal').classList.remove('hidden');
 }
+  async function saveEndTime(endDate){
+  if(!endTimeReportId)return;
+
+  const reports=local();
+  const r=reports.find(x=>x.id===endTimeReportId);
+
+  if(!r)return;
+
+  if(Number.isNaN(endDate.getTime())){
+    $('endTimeMessage').textContent='Kies een geldige datum en tijd.';
+    return;
+  }
+
+  if(endDate < new Date(r.ts)){
+    $('endTimeMessage').textContent=
+      'De eindtijd kan niet vóór het begin van de waarneming liggen.';
+    return;
+  }
+
+  if(endDate > new Date()){
+    $('endTimeMessage').textContent=
+      'De eindtijd kan niet in de toekomst liggen.';
+    return;
+  }
+
+  $('endTimeMessage').textContent='Eindtijd opslaan…';
+
+  const {error}=await db.rpc('end_odor_report',{
+    report_id:r.id,
+    end_time:endDate.toISOString()
+  });
+
+  if(error){
+    console.error('END REPORT ERROR:',error);
+    $('endTimeMessage').textContent=
+      'De eindtijd kon niet worden opgeslagen.';
+    return;
+  }
+
+  $('endTimeModal').classList.add('hidden');
+  endTimeReportId=null;
+
+  await syncAll();
+}
+  $('endNowBtn').onclick=()=>{
+  saveEndTime(new Date());
+};
+
+$('saveEndTimeBtn').onclick=()=>{
+  const value=$('customEndTime').value;
+
+  if(!value){
+    $('endTimeMessage').textContent='Kies eerst een eindtijd.';
+    return;
+  }
+
+  saveEndTime(new Date(value));
+};
+
+$('cancelEndTimeBtn').onclick=()=>{
+  $('endTimeModal').classList.add('hidden');
+  $('endTimeMessage').textContent='';
+  endTimeReportId=null;
+};
 $('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
 </body></html>
