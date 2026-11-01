@@ -8,9 +8,14 @@
 <title>GeurMonitor</title>
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#17211f;background:#f4f7f6}*{box-sizing:border-box}body{margin:0}header{background:#0f766e;color:#fff;padding:18px;position:sticky;top:0;z-index:2}header h1{margin:0;font-size:22px}.sub,.muted{opacity:.82;font-size:13px}.wrap{max-width:620px;margin:auto;padding:16px 16px 92px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 3px 16px #0000000d}.hero{text-align:center;padding:26px 16px}.heroIcon{font-size:50px}.btn,.big{width:100%;border:0;border-radius:15px;padding:15px;background:#0f766e;color:#fff;font-weight:800;margin-top:12px}.big{font-size:18px;padding:18px}.secondary{background:#e7f1ef;color:#0f5f59}.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.level{border:2px solid transparent;border-radius:14px;padding:10px 3px;font-size:11px;font-weight:700}.level b{display:block;font-size:22px}.level.sel{border-color:#111}label{display:block;font-weight:700;margin:13px 0 7px}select,textarea,input{width:100%;padding:12px;border:1px solid #ccd6d3;border-radius:12px;font:inherit;background:#fff}textarea{min-height:80px}.hidden{display:none!important}.success{text-align:center;padding:30px 18px}.check{font-size:48px;color:#078052}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:center;z-index:5}.nav button{width:min(33.33%,205px);padding:13px 4px 17px;border:0;background:#fff;color:#61706d}.nav .active{color:#0f766e;font-weight:800}.item{border-left:6px solid #999;background:#f5f8f7;padding:10px;border-radius:10px;margin:8px 0}.sync{font-size:12px;margin-top:5px}.ok{color:#08734f}.warn{color:#9a5b00}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#f4f8f7;border-radius:12px;padding:12px}.stat b{display:block;font-size:22px;color:#0f766e}.notice{font-size:12px}.topline{display:flex;justify-content:space-between;gap:10px}.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}.choice button{padding:13px;border:2px solid #d4dfdc;border-radius:12px;background:#fff;font-weight:750}.choice button.sel{border-color:#0f766e;background:#e7f1ef;color:#0f5f59}.odorGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.odorTile{min-height:58px;padding:10px;text-align:left;border:2px solid #d4dfdc;border-radius:12px;background:#fff;font-weight:700}.odorTile.sel{border-color:#0f766e;background:#e7f1ef;color:#0f5f59}.odorIcon{font-size:20px;margin-right:5px}.box{background:#f4f8f7;border-radius:12px;padding:12px;margin-top:10px}.fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:end}.fields>div{min-width:0}.fields label{min-height:24px}.fields input{display:block;width:100%;min-width:0;height:50px;margin:0}.homeActions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px}.homeActions .big{margin-top:0}.earlierAction{background:#e7f1ef;color:#0f5f59;border:2px solid #0f766e}.windbox{background:#eef7f5;border-radius:12px;padding:10px;margin-top:8px}.weatherGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.weatherGrid>div{background:#fff;border-radius:10px;padding:9px;font-size:12px}.weatherGrid b{display:block;color:#36534d}.weatherGrid span{display:block;margin-top:3px;font-size:14px;font-weight:700;color:#17211f}.badge{display:inline-block;font-size:11px;padding:3px 7px;border-radius:99px;background:#e7f1ef;color:#0f5f59;margin-left:5px}@media(max-width:400px){.levels{grid-template-columns:repeat(3,1fr)}.fields,.odorGrid,.weatherGrid{grid-template-columns:1fr}}
+body.app-loading > header,
+body.app-loading > main,
+body.app-loading > nav {
+  visibility: hidden;
+}
 </style>
 </head>
-<body>
+<body class="app-loading">
 <header><h1>🌬️ GeurMonitor</h1><div class="sub">Online geurhinder registreren</div></header>
 <main class="wrap">
  <section id="loginSection" class="card">
@@ -93,19 +98,37 @@ function updateAuthUI(){
   }
 }
 async function checkAuth(){
-  if(!db)return;
-  const {data,error}=await db.auth.getSession();
-  if(error){
-    console.error("AUTH TEST:",error);
+  if(!db){
+    updateAuthUI();
+    document.body.classList.remove('app-loading');
     return;
   }
-  currentUser=data.session?.user||null;
-  console.log("AUTH TEST:",currentUser?"ingelogd":"niet ingelogd",currentUser?.email||"");
- updateAuthUI();
 
- if(currentUser){
-  show('home');
- }
+  const {data,error}=await db.auth.getSession();
+
+  if(error){
+    console.error("AUTH TEST:",error);
+    currentUser=null;
+    updateAuthUI();
+    document.body.classList.remove('app-loading');
+    return;
+  }
+
+  currentUser=data.session?.user||null;
+
+  console.log(
+    "AUTH TEST:",
+    currentUser ? "ingelogd" : "niet ingelogd",
+    currentUser?.email || ""
+  );
+
+  updateAuthUI();
+
+  if(currentUser){
+    show('home');
+  }
+
+  document.body.classList.remove('app-loading');
 }
 checkAuth();
  async function login(){
