@@ -103,8 +103,35 @@ body.app-loading > nav {
   appearance:none;
 }
   #customEndTime::-webkit-date-and-time-value{
-  text-align:left;
-  min-width:0;
+  text-align:center;
+  color:#17211f;
+  -webkit-text-fill-color:#17211f;
+  min-width:100%;
+  width:100%;
+}
+  #customEndTime::-webkit-datetime-edit{
+  display:block;
+  width:100%;
+  text-align:center;
+  color:#17211f;
+  -webkit-text-fill-color:#17211f;
+}
+
+#customEndTime::-webkit-datetime-edit-fields-wrapper{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+}
+
+#customEndTime::-webkit-datetime-edit-text,
+#customEndTime::-webkit-datetime-edit-month-field,
+#customEndTime::-webkit-datetime-edit-day-field,
+#customEndTime::-webkit-datetime-edit-year-field,
+#customEndTime::-webkit-datetime-edit-hour-field,
+#customEndTime::-webkit-datetime-edit-minute-field{
+  color:#17211f;
+  -webkit-text-fill-color:#17211f;
 }
 </style>
 </head>
