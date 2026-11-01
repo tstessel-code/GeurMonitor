@@ -140,6 +140,20 @@ body.app-loading > nav {
   color:#17211f;
   -webkit-text-fill-color:#17211f;
 }
+
+.deleteReportAction{
+  display:block;
+  width:auto;
+  margin:6px 0 0 0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#c62828;
+  font-size:18px;
+  line-height:1;
+  cursor:pointer;
+}
+  
 </style>
 </head>
 <body class="app-loading">
@@ -379,6 +393,15 @@ function remainingEndTime(createdAt){
   return `${minutes} min`;
 }
 
+function canDeleteReport(createdAt){
+  if(!createdAt)return false;
+
+  const created=new Date(createdAt).getTime();
+  const now=Date.now();
+
+  return now-created < 10*60*1000 && now>=created;
+}
+  
 function localDateTimeValue(date=new Date()){
   const pad=n=>String(n).padStart(2,'0');
 
@@ -444,6 +467,14 @@ function render(a=local()){
       }
     }
 
+const deleteInfo=canDeleteReport(r.createdAt)
+  ? `<button type="button"
+             class="deleteReportAction"
+             data-delete-report="${r.id}"
+             title="Melding verwijderen"
+             aria-label="Melding verwijderen">🗑️</button>`
+  : '';
+    
     e.innerHTML=`
       <b>${new Date(r.ts).toLocaleString('nl-BE')}</b>
       ${observationBadge}
@@ -453,9 +484,11 @@ function render(a=local()){
       ${env}
 
       <div class="sync ${r.synced?'ok':'warn'}">
-        ${r.synced?'☁ Online':'↻ Wacht op synchronisatie'}
+      ${r.synced?'☁ Online':'↻ Wacht op synchronisatie'}
       </div>
-
+      
+      ${deleteInfo}
+      
       ${endInfo}
     `;
 
