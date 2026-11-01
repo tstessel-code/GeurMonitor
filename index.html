@@ -226,7 +226,106 @@ function localDateTimeValue(date=new Date()){
          `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 function esc(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function render(a=local()){const l=$('list');l.innerHTML=a.length?'':'<p class="muted">Nog geen meldingen.</p>';a.forEach(r=>{const e=document.createElement('div');e.className='item';e.style.borderColor=D[r.intensity]?.[1]||'#999';const wh=r.windSpeedKmh!=null?`<div class="muted">💨 ${esc(r.windSpeedKmh)} km/u · ${esc(r.windDirectionCompass||'–')}${r.windDirectionDeg!=null?' ('+Math.round(r.windDirectionDeg)+'°)':''}</div>`:'';const env=(r.temperatureC!=null||r.relativeHumidityPct!=null||r.pressureMslHpa!=null||r.precipitationMm!=null||r.cloudCoverPct!=null)?`<div class="muted">🌡️ ${esc(r.temperatureC??'–')} °C · 💧 ${esc(r.relativeHumidityPct??'–')}% · 🧭 ${esc(r.pressureMslHpa??'–')} hPa · 🌧️ ${esc(r.precipitationMm??'–')} mm · ☁️ ${esc(r.cloudCoverPct??'–')}%</div>`:'';const observationBadge=r.observationMode==='earlier'?'<span class="badge">eerdere waarneming</span>':(r.observationMode==='now'?'<span class="badge">direct geregistreerd</span>':'');e.innerHTML=`<b>${new Date(r.ts).toLocaleString('nl-BE')}</b>${observationBadge}<div>${esc(r.label)}${r.odor?' · '+esc(r.odor):''}</div>${r.comment?'<small>'+esc(r.comment)+'</small>':''}${wh}${env}<div class="sync ${r.synced?'ok':'warn'}">${r.synced?'☁ Online':'↻ Wacht op synchronisatie'}</div>`;l.appendChild(e)});const now=new Date();$('today').textContent=a.filter(x=>new Date(x.ts).toDateString()===now.toDateString()).length;$('week').textContent=a.filter(x=>now-new Date(x.ts)<=7*864e5).length;$('max').textContent=a.length?D[Math.max(...a.map(x=>x.intensity))][0]:'–';const c={};a.map(x=>x.odor).filter(Boolean).forEach(x=>c[x]=(c[x]||0)+1);$('common').textContent=Object.keys(c).length?Object.entries(c).sort((x,y)=>y[1]-x[1])[0][0]:'–'}
+function render(a=local()){
+  const l=$('list');
+
+  l.innerHTML=a.length?'':'<p class="muted">Nog geen meldingen.</p>';
+
+  // De eerste melding in de lijst is de meest recente melding.
+  const latestId=a.length ? a[0].id : null;
+
+  a.forEach(r=>{
+    const e=document.createElement('div');
+    e.className='item';
+    e.style.borderColor=D[r.intensity]?.[1]||'#999';
+
+    const wh=r.windSpeedKmh!=null
+      ? `<div class="muted">💨 ${esc(r.windSpeedKmh)} km/u · ${esc(r.windDirectionCompass||'–')}${r.windDirectionDeg!=null?' ('+Math.round(r.windDirectionDeg)+'°)':''}</div>`
+      : '';
+
+    const env=(r.temperatureC!=null||
+               r.relativeHumidityPct!=null||
+               r.pressureMslHpa!=null||
+               r.precipitationMm!=null||
+               r.cloudCoverPct!=null)
+      ? `<div class="muted">🌡️ ${esc(r.temperatureC??'–')} °C · 💧 ${esc(r.relativeHumidityPct??'–')}% · 🧭 ${esc(r.pressureMslHpa??'–')} hPa · 🌧️ ${esc(r.precipitationMm??'–')} mm · ☁️ ${esc(r.cloudCoverPct??'–')}%</div>`
+      : '';
+
+    const observationBadge=r.observationMode==='earlier'
+      ? '<span class="badge">eerdere waarneming</span>'
+      : (r.observationMode==='now'
+          ? '<span class="badge">direct geregistreerd</span>'
+          : '');
+
+    let endInfo='';
+
+    // Indien een eindtijd geregistreerd werd, toon de totale duur.
+    if(r.endedAt){
+      endInfo=`
+        <div class="endTimeArea">
+          <span class="durationInfo">
+            Duur: ${formatDuration(r.ts,r.endedAt)}
+          </span>
+        </div>`;
+    }
+
+    // Alleen bij de laatste melding zonder eindtijd bekijken we
+    // of de 24-uursperiode nog actief is.
+    else if(r.id===latestId && r.createdAt){
+      const remaining=remainingEndTime(r.createdAt);
+
+      if(remaining){
+        endInfo=`
+          <div class="endTimeArea">
+            <span class="endTimeAction">
+              Eindtijd mogelijk: nog ${remaining}
+            </span>
+          </div>`;
+      }
+    }
+
+    e.innerHTML=`
+      <b>${new Date(r.ts).toLocaleString('nl-BE')}</b>
+      ${observationBadge}
+      <div>${esc(r.label)}${r.odor?' · '+esc(r.odor):''}</div>
+      ${r.comment?'<small>'+esc(r.comment)+'</small>':''}
+      ${wh}
+      ${env}
+
+      <div class="sync ${r.synced?'ok':'warn'}">
+        ${r.synced?'☁ Online':'↻ Wacht op synchronisatie'}
+      </div>
+
+      ${endInfo}
+    `;
+
+    l.appendChild(e);
+  });
+
+  const now=new Date();
+
+  $('today').textContent=a.filter(
+    x=>new Date(x.ts).toDateString()===now.toDateString()
+  ).length;
+
+  $('week').textContent=a.filter(
+    x=>now-new Date(x.ts)<=7*864e5
+  ).length;
+
+  $('max').textContent=a.length
+    ? D[Math.max(...a.map(x=>x.intensity))][0]
+    : '–';
+
+  const c={};
+
+  a.map(x=>x.odor)
+    .filter(Boolean)
+    .forEach(x=>c[x]=(c[x]||0)+1);
+
+  $('common').textContent=Object.keys(c).length
+    ? Object.entries(c).sort((x,y)=>y[1]-x[1])[0][0]
+    : '–';
+}
 $('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
 </body></html>
