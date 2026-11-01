@@ -674,6 +674,36 @@ $('cancelDeleteBtn').onclick=()=>{
   $('deleteMessage').textContent='';
   deleteReportId=null;
 };  
+$('confirmDeleteBtn').onclick=async()=>{
+  if(!deleteReportId)return;
+
+  const id=deleteReportId;
+
+  $('deleteMessage').textContent='Melding verwijderen…';
+  $('confirmDeleteBtn').disabled=true;
+
+  const {error}=await db.rpc('delete_odor_report',{
+    report_id:id
+  });
+
+  $('confirmDeleteBtn').disabled=false;
+
+  if(error){
+    console.error('DELETE REPORT ERROR:',error);
+    $('deleteMessage').textContent='De melding kon niet worden verwijderd.';
+    return;
+  }
+
+  // Verwijder dezelfde melding ook uit de lokale opslag.
+  const remaining=local().filter(r=>r.id!==id);
+  saveLocal(remaining);
+
+  deleteReportId=null;
+  $('deleteMessage').textContent='';
+  $('deleteModal').classList.add('hidden');
+
+  await syncAll();
+};  
 $('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
 </body></html>
