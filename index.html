@@ -296,9 +296,9 @@ function render(a=local()){
       if(remaining){
         endInfo=`
           <div class="endTimeArea">
-            <span class="endTimeAction">
+            <button type="button" class="endTimeAction" data-end-report="${r.id}">
               Eindtijd mogelijk: nog ${remaining}
-            </span>
+            </button>
           </div>`;
       }
     }
@@ -344,6 +344,73 @@ function render(a=local()){
   $('common').textContent=Object.keys(c).length
     ? Object.entries(c).sort((x,y)=>y[1]-x[1])[0][0]
     : '–';
+  document.querySelectorAll('[data-end-report]').forEach(button=>{
+  button.onclick=()=>{
+    openEndTimeEditor(button.dataset.endReport);
+  };
+});
+}
+async function openEndTimeEditor(reportId){
+  const reports=local();
+  const r=reports.find(x=>x.id===reportId);
+
+  if(!r)return;
+
+  const remaining=r.createdAt ? remainingEndTime(r.createdAt) : null;
+
+  if(!remaining){
+    alert('De periode om een eindtijd toe te voegen is verstreken.');
+    return;
+  }
+
+  const useNow=confirm(
+    'Wil je de geurhinder nu beëindigen?\n\n' +
+    'OK = eindtijd is nu\n' +
+    'Annuleren = zelf een eindtijd kiezen'
+  );
+
+  let endDate;
+
+  if(useNow){
+    endDate=new Date();
+  }else{
+    const value=prompt(
+      'Geef de eindtijd in als YYYY-MM-DD HH:MM',
+      localDateTimeValue(new Date()).replace('T',' ')
+    );
+
+    if(!value)return;
+
+    endDate=new Date(value.replace(' ','T'));
+
+    if(Number.isNaN(endDate.getTime())){
+      alert('Ongeldige datum of tijd.');
+      return;
+    }
+  }
+
+  if(endDate < new Date(r.ts)){
+    alert('De eindtijd kan niet vóór het begin van de waarneming liggen.');
+    return;
+  }
+
+  if(endDate > new Date()){
+    alert('De eindtijd kan niet in de toekomst liggen.');
+    return;
+  }
+
+  const {error}=await db.rpc('end_odor_report',{
+    report_id:r.id,
+    end_time:endDate.toISOString()
+  });
+
+  if(error){
+    console.error('END REPORT ERROR:',error);
+    alert('De eindtijd kon niet worden opgeslagen.');
+    return;
+  }
+
+  await syncAll();
 }
 $('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
