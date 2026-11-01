@@ -32,6 +32,55 @@ body.app-loading > nav {
 .endTimeAction{
   cursor:pointer;
 }
+  .gmModal{
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.35);
+}
+
+.gmModal.hidden{
+  display:none;
+}
+
+.gmModalCard{
+  width:100%;
+  max-width:420px;
+  background:#fff;
+  border-radius:16px;
+  padding:22px;
+  box-shadow:0 10px 35px rgba(0,0,0,.18);
+}
+
+.gmModalCard h2{
+  margin-top:0;
+}
+
+.gmModalDivider{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:14px 0;
+  color:#777;
+  font-size:12px;
+}
+
+.gmModalDivider::before,
+.gmModalDivider::after{
+  content:"";
+  flex:1;
+  height:1px;
+  background:#ddd;
+}
+
+.gmModalCard input{
+  width:100%;
+  box-sizing:border-box;
+}
 </style>
 </head>
 <body class="app-loading">
@@ -73,6 +122,36 @@ body.app-loading > nav {
 <section id="reports" class="hidden"><div class="card"><div class="topline"><h2>Meldingen</h2><button class="btn secondary" style="width:auto;margin:0;padding:8px 12px" id="sync">Synchroniseren</button></div><div id="list"></div></div></section>
 <section id="dashboard" class="hidden"><div class="card"><h2>Dashboard</h2><div class="stats"><div class="stat"><b id="today">0</b>Vandaag</div><div class="stat"><b id="week">0</b>7 dagen</div><div class="stat"><b id="max">–</b>Hoogste</div><div class="stat"><b id="common">–</b>Meest gemeld</div></div></div></section>
 </main>
+  <div id="endTimeModal" class="gmModal hidden">
+  <div class="gmModalCard">
+    <h2>Eindtijd registreren</h2>
+
+    <p class="muted">
+      Wanneer is de geurhinder gestopt?
+    </p>
+
+    <button id="endNowBtn" class="btn" type="button">
+      ✓ Nu
+    </button>
+
+    <div class="gmModalDivider">
+      <span>of</span>
+    </div>
+
+    <label for="customEndTime">Andere eindtijd</label>
+    <input id="customEndTime" type="datetime-local">
+
+    <button id="saveEndTimeBtn" class="btn secondary" type="button">
+      Eindtijd opslaan
+    </button>
+
+    <button id="cancelEndTimeBtn" class="btn secondary" type="button">
+      Annuleren
+    </button>
+
+    <p id="endTimeMessage" class="muted"></p>
+  </div>
+</div>
 <nav class="nav"><button data-page="home" class="active">⌂<br>Home</button><button data-page="reports">☷<br>Meldingen</button><button data-page="dashboard">▥<br>Dashboard</button></nav>
 <script src="config.js"></script><script src="weather-module.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -350,67 +429,29 @@ function render(a=local()){
   };
 });
 }
-async function openEndTimeEditor(reportId){
+let endTimeReportId=null;
+
+function openEndTimeEditor(reportId){
   const reports=local();
   const r=reports.find(x=>x.id===reportId);
 
   if(!r)return;
 
-  const remaining=r.createdAt ? remainingEndTime(r.createdAt) : null;
+  const remaining=r.createdAt
+    ? remainingEndTime(r.createdAt)
+    : null;
 
   if(!remaining){
     alert('De periode om een eindtijd toe te voegen is verstreken.');
     return;
   }
 
-  const useNow=confirm(
-    'Wil je de geurhinder nu beëindigen?\n\n' +
-    'OK = eindtijd is nu\n' +
-    'Annuleren = zelf een eindtijd kiezen'
-  );
+  endTimeReportId=reportId;
 
-  let endDate;
+  $('customEndTime').value=localDateTimeValue(new Date());
+  $('endTimeMessage').textContent='';
 
-  if(useNow){
-    endDate=new Date();
-  }else{
-    const value=prompt(
-      'Geef de eindtijd in als YYYY-MM-DD HH:MM',
-      localDateTimeValue(new Date()).replace('T',' ')
-    );
-
-    if(!value)return;
-
-    endDate=new Date(value.replace(' ','T'));
-
-    if(Number.isNaN(endDate.getTime())){
-      alert('Ongeldige datum of tijd.');
-      return;
-    }
-  }
-
-  if(endDate < new Date(r.ts)){
-    alert('De eindtijd kan niet vóór het begin van de waarneming liggen.');
-    return;
-  }
-
-  if(endDate > new Date()){
-    alert('De eindtijd kan niet in de toekomst liggen.');
-    return;
-  }
-
-  const {error}=await db.rpc('end_odor_report',{
-    report_id:r.id,
-    end_time:endDate.toISOString()
-  });
-
-  if(error){
-    console.error('END REPORT ERROR:',error);
-    alert('De eindtijd kon niet worden opgeslagen.');
-    return;
-  }
-
-  await syncAll();
+  $('endTimeModal').classList.remove('hidden');
 }
 $('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
