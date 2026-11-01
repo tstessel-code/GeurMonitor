@@ -669,6 +669,11 @@ function openDeleteModal(reportId){
   $('deleteMessage').textContent='';
   $('deleteModal').classList.remove('hidden');
 }
+$('cancelDeleteBtn').onclick=()=>{
+  $('deleteModal').classList.add('hidden');
+  $('deleteMessage').textContent='';
+  deleteReportId=null;
+};  
 $('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
 </script>
 </body></html>
