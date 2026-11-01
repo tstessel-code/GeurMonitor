@@ -429,7 +429,7 @@ function canDeleteReport(createdAt){
   const created=new Date(createdAt).getTime();
   const now=Date.now();
 
-  return now-created < 10*60*1000 && now>=created;
+  return now-created < 12*60*60*1000 && now>=created;
 }
   
 function localDateTimeValue(date=new Date()){
