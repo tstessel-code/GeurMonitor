@@ -478,20 +478,20 @@ function render(a=local()){
         </div>`;
     }
 
-    // Alleen bij de laatste melding zonder eindtijd bekijken we
-    // of de 24-uursperiode nog actief is.
-    else if(r.id===latestId && r.createdAt){
-      const remaining=remainingEndTime(r.createdAt);
+    // Bij elke eigen melding zonder eindtijd bekijken we
+// of de 24-uursperiode nog actief is.
+else if(r.createdAt){
+  const remaining=remainingEndTime(r.createdAt);
 
-      if(remaining){
-        endInfo=`
-          <div class="endTimeArea">
-            <button type="button" class="endTimeAction" data-end-report="${r.id}">
-              Eindtijd mogelijk: nog ${remaining}
-            </button>
-          </div>`;
-      }
-    }
+  if(remaining){
+    endInfo=`
+      <div class="endTimeArea">
+        <button type="button" class="endTimeAction" data-end-report="${r.id}">
+          Eindtijd mogelijk: nog ${remaining}
+        </button>
+      </div>`;
+  }
+}
 
 const deleteInfo=canDeleteReport(r.createdAt)
   ? `<button type="button"
