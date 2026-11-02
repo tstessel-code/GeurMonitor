@@ -847,19 +847,13 @@ if(endMoment && endMoment > new Date()){
 
   const loc = locationValues();
 
-  if(timeMode === 'earlier' && !loc){
-    return alert(
-      'Gebruik GPS of kies de locatie van de waarneming op de kaart.'
-    );
-  }
+if(windLoading){
+  return alert('De windgegevens worden nog opgehaald.');
+}
 
-  if(windLoading){
-    return alert('De windgegevens worden nog opgehaald.');
-  }
-
-  if(loc && !wind){
-    await updateWind();
-  }
+if(loc && !wind){
+  await updateWind();
+}
 
   const odorValue =
     selectedOdor || $('otherOdor').value.trim();
