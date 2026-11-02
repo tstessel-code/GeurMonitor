@@ -823,15 +823,25 @@ $('save').onclick = async() => {
 
   const endMoment = earlierEndDate();
 
-  if(endMoment && endMoment < moment){
-    return alert(
-      'De eindtijd kan niet vóór het begin van de waarneming liggen.'
-    );
-  }
+  const endMoment = earlierEndDate();
 
-  if(endMoment && endMoment > new Date()){
-    return alert('De eindtijd kan niet in de toekomst liggen.');
-  }
+if(endMoment && endMoment < moment){
+  return alert(
+    'De eindtijd kan niet vóór het begin van de waarneming liggen.'
+  );
+}
+
+if(endMoment && (endMoment - moment) > 12 * 60 * 60 * 1000){
+  return alert(
+    'Een waarneming mag maximaal 12 uur duren.'
+  );
+}
+
+if(endMoment && endMoment > new Date()){
+  return alert(
+    'De eindtijd kan niet in de toekomst liggen.'
+  );
+}
 
   const loc = locationValues();
 
