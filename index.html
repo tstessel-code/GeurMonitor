@@ -555,6 +555,19 @@
         border-radius: 50%;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
       }
+
+      .adminToolbar { display:flex; gap:8px; align-items:center; margin-bottom:14px; }
+      .adminToolbar .btn { width:auto; margin:0; }
+      .userCard { border:1px solid #dce7e4; border-radius:14px; padding:12px; margin:10px 0; background:#f8fbfa; }
+      .userHeader { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+      .userEmail { font-weight:800; overflow-wrap:anywhere; }
+      .statusBadge { display:inline-block; padding:4px 8px; border-radius:99px; font-size:11px; font-weight:800; }
+      .statusActive { background:#dff4e8; color:#08734f; }
+      .statusBlocked { background:#fde5e5; color:#a91f1f; }
+      .userActions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+      .userActions .btn { margin:0; padding:10px; font-size:13px; }
+      .danger { background:#c62828; color:#fff; }
+      .adminMessage { margin:10px 0; }
     </style>
   </head>
   <body class="app-loading">
@@ -600,6 +613,9 @@
         <div id="accountInfo" class="card hidden">
           <div class="muted">👤 Aangemeld als</div>
           <b id="accountEmail"></b>
+          <button id="adminUsersBtn" class="btn secondary hidden" type="button">
+            👥 Gebruikersbeheer
+          </button>
           <button id="logoutBtn" class="btn secondary" type="button">
             Uitloggen
           </button>
@@ -848,6 +864,24 @@
           <div id="list"></div>
         </div>
       </section>
+
+      <section id="adminUsers" class="hidden">
+        <div class="card">
+          <div class="topline">
+            <div>
+              <h2 style="margin-bottom:4px">Gebruikersbeheer</h2>
+              <p class="muted" style="margin-top:0">Alleen beschikbaar voor beheerders.</p>
+            </div>
+          </div>
+          <div class="adminToolbar">
+            <button id="addUserBtn" class="btn" type="button">＋ Gebruiker toevoegen</button>
+            <button id="refreshUsersBtn" class="btn secondary" type="button">↻ Vernieuwen</button>
+          </div>
+          <p id="adminUsersMessage" class="muted adminMessage"></p>
+          <div id="adminUsersList"></div>
+          <button id="adminBackBtn" class="btn secondary" type="button">Terug</button>
+        </div>
+      </section>
       <section id="dashboard" class="hidden">
         <div class="card">
           <h2>Dashboard</h2>
@@ -934,7 +968,9 @@
         timeMode = "now",
         windLoading = false,
         selectedOdor = "",
-        currentUser = null;
+        currentUser = null,
+        isAdmin = false;
+      const ADMIN_FUNCTION = "admin-users";
       const NEERVELP_CHURCH = {
         lat: 50.820261,
         lon: 4.8107,
@@ -1944,6 +1980,94 @@
 
         await syncAll();
       };
+
+        async function callAdminFunction(action, payload = {}) {
+          if (!db || !currentUser) throw new Error("Niet aangemeld.");
+          const { data, error } = await db.functions.invoke(ADMIN_FUNCTION, {
+            body: { action, ...payload },
+          });
+          if (error) throw error;
+          if (data?.error) throw new Error(data.error);
+          return data;
+        }
+        async function checkAdminAccess() {
+          try {
+            const data = await callAdminFunction("check");
+            isAdmin = data?.isAdmin === true;
+          } catch (error) {
+            console.info("Geen adminrechten of adminfunctie nog niet actief.", error);
+            isAdmin = false;
+          }
+          updateAuthUI();
+        }
+        function renderAdminUsers(users = []) {
+          const list = $("adminUsersList");
+          list.innerHTML = users.length ? "" : '<p class="muted">Geen gebruikers gevonden.</p>';
+          users.forEach((user) => {
+            const blocked = !!user.blocked;
+            const ownAccount = user.id === currentUser?.id;
+            const card = document.createElement("div");
+            card.className = "userCard";
+            card.innerHTML = `
+              <div class="userHeader">
+                <div>
+                  <div class="userEmail">${esc(user.email || "Geen e-mailadres")}</div>
+                  <div class="muted">Aangemaakt: ${user.created_at ? new Date(user.created_at).toLocaleString("nl-BE") : "–"}</div>
+                </div>
+                <span class="statusBadge ${blocked ? "statusBlocked" : "statusActive"}">${blocked ? "Geblokkeerd" : "Actief"}</span>
+              </div>
+              <div class="userActions">
+                <button class="btn secondary" data-toggle-user="${esc(user.id)}" data-blocked="${blocked}" ${ownAccount ? "disabled" : ""}>
+                  ${blocked ? "Deblokkeren" : "Blokkeren"}
+                </button>
+                <button class="btn danger" data-remove-user="${esc(user.id)}" data-email="${esc(user.email || "")}" ${ownAccount ? "disabled" : ""}>Verwijderen</button>
+              </div>`;
+            list.appendChild(card);
+          });
+          list.querySelectorAll("[data-toggle-user]").forEach((button) => {
+            button.onclick = async () => {
+              const block = button.dataset.blocked !== "true";
+              if (!confirm(`Wil je deze gebruiker ${block ? "blokkeren" : "deblokkeren"}?`)) return;
+              await runAdminAction(block ? "block" : "unblock", { userId: button.dataset.toggleUser });
+            };
+          });
+          list.querySelectorAll("[data-remove-user]").forEach((button) => {
+            button.onclick = async () => {
+              if (!confirm(`Gebruiker ${button.dataset.email} definitief verwijderen?`)) return;
+              await runAdminAction("delete", { userId: button.dataset.removeUser });
+            };
+          });
+        }
+        async function loadAdminUsers() {
+          if (!isAdmin) return;
+          $("adminUsersMessage").textContent = "Gebruikers laden…";
+          try {
+            const data = await callAdminFunction("list");
+            renderAdminUsers(data?.users || []);
+            $("adminUsersMessage").textContent = `${data?.users?.length || 0} gebruiker(s) gevonden.`;
+          } catch (error) {
+            console.error("ADMIN LIST ERROR:", error);
+            $("adminUsersMessage").textContent = "Gebruikers konden niet worden geladen.";
+          }
+        }
+        async function runAdminAction(action, payload) {
+          $("adminUsersMessage").textContent = "Actie uitvoeren…";
+          try {
+            await callAdminFunction(action, payload);
+            await loadAdminUsers();
+          } catch (error) {
+            console.error("ADMIN ACTION ERROR:", error);
+            $("adminUsersMessage").textContent = error.message || "De actie is mislukt.";
+          }
+        }
+        $("adminUsersBtn").onclick = async () => { show("adminUsers"); await loadAdminUsers(); };
+        $("adminBackBtn").onclick = () => show("home");
+        $("refreshUsersBtn").onclick = loadAdminUsers;
+        $("addUserBtn").onclick = async () => {
+          const email = prompt("E-mailadres van de nieuwe gebruiker:");
+          if (!email) return;
+          await runAdminAction("invite", { email: email.trim() });
+        };
       $("sync").onclick = syncAll;
       document
         .querySelectorAll(".nav button")
