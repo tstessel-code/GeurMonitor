@@ -350,8 +350,7 @@ body.app-loading > nav {
 
   <p class="muted">
     Tik op de kaart om de locatie van de geurwaarneming te kiezen.
-    De groene cirkel toont een straal van 300 meter rond de kerk van Neervelp.
-  </p>
+</p>
 
   <button class="btn secondary" id="closeMapBtn" type="button">
     Kaart sluiten
@@ -539,7 +538,6 @@ const NEERVELP_CHURCH={
 
 let locationMap=null;
 let locationMarker=null;
-let churchRadius=null;
 const $=id=>document.getElementById(id);
 const storageKey=()=>currentUser?`geurmonitor:${currentUser.id}`:'geurmonitor:guest';
 
@@ -683,31 +681,7 @@ function initializeLocationMap(){
       attribution:'&copy; OpenStreetMap contributors'
     }
   ).addTo(locationMap);
-
-  churchRadius=L.circle(
-    [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
-    {
-      radius:300,
-      color:'#0f766e',
-      weight:2,
-      fillColor:'#0f766e',
-      fillOpacity:0.10
-    }
-  ).addTo(locationMap);
-
-  L.circleMarker(
-    [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
-    {
-      radius:6,
-      color:'#0f5f59',
-      fillColor:'#0f766e',
-      fillOpacity:1,
-      weight:2
-    }
-  )
-  .addTo(locationMap)
-  .bindTooltip('Kerk van Neervelp');
-
+  
   locationMap.on('click',async event=>{
     const lat=event.latlng.lat;
     const lon=event.latlng.lng;
