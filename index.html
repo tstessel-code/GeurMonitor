@@ -6,6 +6,9 @@
 <meta name="theme-color" content="#0f766e">
 <link rel="manifest" href="manifest.webmanifest">
 <title>GeurMonitor</title>
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">  
 <style>
 :root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#17211f;background:#f4f7f6}*{box-sizing:border-box}body{margin:0}header{background:#0f766e;color:#fff;padding:18px;position:sticky;top:0;z-index:2}header h1{margin:0;font-size:22px}.sub,.muted{opacity:.82;font-size:13px}.wrap{max-width:620px;margin:auto;padding:16px 16px 92px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 3px 16px #0000000d}.hero{text-align:center;padding:26px 16px}.heroIcon{font-size:50px}.btn,.big{width:100%;border:0;border-radius:15px;padding:15px;background:#0f766e;color:#fff;font-weight:800;margin-top:12px}.big{font-size:18px;padding:18px}.secondary{background:#e7f1ef;color:#0f5f59}.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.level{border:2px solid transparent;border-radius:14px;padding:10px 3px;font-size:11px;font-weight:700}.level b{display:block;font-size:22px}.level.sel{border-color:#111}label{display:block;font-weight:700;margin:13px 0 7px}select,textarea,input{width:100%;padding:12px;border:1px solid #ccd6d3;border-radius:12px;font:inherit;background:#fff}textarea{min-height:80px}.hidden{display:none!important}.success{text-align:center;padding:30px 18px}.check{font-size:48px;color:#078052}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:center;z-index:5}.nav button{width:min(33.33%,205px);padding:13px 4px 17px;border:0;background:#fff;color:#61706d}.nav .active{color:#0f766e;font-weight:800}.item{border-left:6px solid #999;background:#f5f8f7;padding:10px;border-radius:10px;margin:8px 0}.sync{font-size:12px;margin-top:5px}.ok{color:#08734f}.warn{color:#9a5b00}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#f4f8f7;border-radius:12px;padding:12px}.stat b{display:block;font-size:22px;color:#0f766e}.notice{font-size:12px}.topline{display:flex;justify-content:space-between;gap:10px}.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}.choice button{padding:13px;border:2px solid #d4dfdc;border-radius:12px;background:#fff;font-weight:750}.choice button.sel{border-color:#0f766e;background:#e7f1ef;color:#0f5f59}.odorGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.odorTile{min-height:58px;padding:10px;text-align:left;border:2px solid #d4dfdc;border-radius:12px;background:#fff;font-weight:700}.odorTile.sel{border-color:#0f766e;background:#e7f1ef;color:#0f5f59}.odorIcon{font-size:20px;margin-right:5px}.box{background:#f4f8f7;border-radius:12px;padding:12px;margin-top:10px}.fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:end}.fields>div{min-width:0}.fields label{min-height:24px}.fields input{display:block;width:100%;min-width:0;height:50px;margin:0}.homeActions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px}.homeActions .big{margin-top:0}.earlierAction{background:#e7f1ef;color:#0f5f59;border:2px solid #0f766e}.windbox{background:#eef7f5;border-radius:12px;padding:10px;margin-top:8px}.weatherGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.weatherGrid>div{background:#fff;border-radius:10px;padding:9px;font-size:12px}.weatherGrid b{display:block;color:#36534d}.weatherGrid span{display:block;margin-top:3px;font-size:14px;font-weight:700;color:#17211f}.badge{display:inline-block;font-size:11px;padding:3px 7px;border-radius:99px;background:#e7f1ef;color:#0f5f59;margin-left:5px}@media(max-width:400px){.levels{grid-template-columns:repeat(3,1fr)}.fields,.odorGrid,.weatherGrid{grid-template-columns:1fr}}
 body.app-loading > header,
@@ -203,6 +206,29 @@ body.app-loading > nav {
 .formActions{
   margin-top:18px;
 }  
+#mapPickerBox{
+  margin-top:12px;
+}
+
+#locationMap{
+  width:100%;
+  height:320px;
+  border:1px solid #ccd6d3;
+  border-radius:14px;
+  overflow:hidden;
+  background:#e7f1ef;
+}
+
+#mapPickerBox .leaflet-container{
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+.mapSelectionMarker{
+  background:#0f766e;
+  border:3px solid #fff;
+  border-radius:50%;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+}
 </style>
 </head>
 <body class="app-loading">
@@ -315,7 +341,22 @@ body.app-loading > nav {
   <button class="btn secondary" id="gps" type="button">
     📍 Huidige locatie gebruiken
   </button>
+<button class="btn secondary" id="openMapBtn" type="button">
+  🗺️ Locatie op kaart kiezen
+</button>
 
+<div id="mapPickerBox" class="box hidden">
+  <div id="locationMap"></div>
+
+  <p class="muted">
+    Tik op de kaart om de locatie van de geurwaarneming te kiezen.
+    De groene cirkel toont een straal van 300 meter rond de kerk van Neervelp.
+  </p>
+
+  <button class="btn secondary" id="closeMapBtn" type="button">
+    Kaart sluiten
+  </button>
+</div>
   <div id="manualLocation" class="box hidden">
     <div class="fields">
       <div>
@@ -486,10 +527,19 @@ body.app-loading > nav {
   </div>
 </div>
 <nav class="nav"><button data-page="home" class="active">⌂<br>Home</button><button data-page="reports">☷<br>Meldingen</button><button data-page="dashboard">▥<br>Dashboard</button></nav>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="config.js"></script><script src="weather-module.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const D=[['Geen','#4caf50'],['Licht','#c9d72e'],['Matig','#f5a623'],['Sterk','#e84a3c'],['Zeer sterk','#7d2b73']];
 let level=null,coords=null,wind=null,db=null,timeMode='now',windLoading=false,selectedOdor='',currentUser=null;
+const NEERVELP_CHURCH={
+  lat:50.820261,
+  lon:4.810700
+};
+
+let locationMap=null;
+let locationMarker=null;
+let churchRadius=null;
 const $=id=>document.getElementById(id);
 const storageKey=()=>currentUser?`geurmonitor:${currentUser.id}`:'geurmonitor:guest';
 
@@ -608,12 +658,114 @@ D.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.cla
 function pad(n){return String(n).padStart(2,'0')}function dateParts(d=new Date()){return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,time:`${pad(d.getHours())}:${pad(d.getMinutes())}`}}
 function observedDate(){if(timeMode==='now')return new Date();if(!$('observedDate').value||!$('observedTime').value)return null;const d=new Date(`${$('observedDate').value}T${$('observedTime').value}:00`);return Number.isNaN(d.getTime())?null:d}
 function setMode(mode){timeMode=mode;$('earlierBox').classList.toggle('hidden',mode!=='earlier');$('toggleManual').classList.toggle('hidden',mode!=='earlier');$('modeTitle').innerHTML=mode==='earlier'?'<b>🕘 Eerdere waarneming</b>':'<b>＋ Registratie op dit moment</b>';wind=null;$('windState').textContent='Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.';['wSpeed','wDirection','wTemperature','wHumidity','wPressure','wPrecipitation','wCloud'].forEach(id=>$(id).textContent='–');}$('toggleManual').onclick=()=>{$('manualLocation').classList.toggle('hidden')};
-function reset(mode='now'){level=null;coords=null;wind=null;windLoading=false;setMode(mode);document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));document.querySelectorAll('.odorTile').forEach(x=>x.classList.remove('sel'));selectedOdor='';$('otherOdor').value='';$('otherOdorBox').classList.add('hidden');$('comment').value='';$('latitude').value='';$('longitude').value='';$('manualLocation').classList.add('hidden');const p=dateParts();$('observedDate').value=p.date;$('observedDate').max=p.date;$('observedTime').value=p.time;$('gpsState').textContent='Nog geen locatie.'}
+function reset(mode='now'){level=null;coords=null;wind=null;windLoading=false;setMode(mode);document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));document.querySelectorAll('.odorTile').forEach(x=>x.classList.remove('sel'));selectedOdor='';$('otherOdor').value='';$('otherOdorBox').classList.add('hidden');$('comment').value='';$('latitude').value='';$('longitude').value='';$('manualLocation').classList.add('hidden');const p=dateParts();$('observedDate').value=p.date;$('observedDate').max=p.date;$('observedTime').value=p.time;
+$('mapPickerBox').classList.add('hidden');
+
+if(locationMarker && locationMap){
+  locationMap.removeLayer(locationMarker);
+  locationMarker=null;
+}
+$('gpsState').textContent='Nog geen locatie.'}
+function initializeLocationMap(){
+  if(locationMap)return;
+
+  locationMap=L.map('locationMap',{
+    zoomControl:true
+  }).setView(
+    [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
+    16
+  );
+
+  L.tileLayer(
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      maxZoom:19,
+      attribution:'&copy; OpenStreetMap contributors'
+    }
+  ).addTo(locationMap);
+
+  churchRadius=L.circle(
+    [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
+    {
+      radius:300,
+      color:'#0f766e',
+      weight:2,
+      fillColor:'#0f766e',
+      fillOpacity:0.10
+    }
+  ).addTo(locationMap);
+
+  L.circleMarker(
+    [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
+    {
+      radius:6,
+      color:'#0f5f59',
+      fillColor:'#0f766e',
+      fillOpacity:1,
+      weight:2
+    }
+  )
+  .addTo(locationMap)
+  .bindTooltip('Kerk van Neervelp');
+
+  locationMap.on('click',async event=>{
+    const lat=event.latlng.lat;
+    const lon=event.latlng.lng;
+
+    coords={lat,lon};
+
+    $('latitude').value=lat.toFixed(6);
+    $('longitude').value=lon.toFixed(6);
+
+    if(locationMarker){
+      locationMarker.setLatLng(event.latlng);
+    }else{
+      locationMarker=L.marker(event.latlng).addTo(locationMap);
+    }
+
+    $('gpsState').textContent=
+      `✓ Locatie gekozen op kaart: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+
+    wind=null;
+    await updateWind();
+  });
+}
 function locationValues(){if(coords)return coords;const lat=parseFloat($('latitude').value),lon=parseFloat($('longitude').value);return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null}
 async function updateWind(){const moment=observedDate(),loc=locationValues();if(!moment||!loc)return null;if(moment>new Date()){$('windState').textContent='Een toekomstig tijdstip is niet toegestaan.';wind=null;return null}windLoading=true;$('windState').textContent='💨 Windgegevens ophalen…';try{wind=await fetchWindForDateTime(loc.lat,loc.lon,moment);const deg=wind.windDirectionDeg==null?'–':Math.round(wind.windDirectionDeg)+'°';$('windState').textContent='✓ Weergegevens opgehaald';$('wSpeed').textContent=`${wind.windSpeedKmh??'–'} km/u`;$('wDirection').textContent=`${wind.windDirectionCompass??'–'} (${deg})`;$('wTemperature').textContent=`${wind.temperatureC??'–'} °C`;$('wHumidity').textContent=`${wind.relativeHumidityPct??'–'} %`;$('wPressure').textContent=`${wind.pressureMslHpa??'–'} hPa`;$('wPrecipitation').textContent=`${wind.precipitationMm??'–'} mm`;$('wCloud').textContent=`${wind.cloudCoverPct??'–'} %`;return wind}catch(error){console.error(error);wind=null;$('windState').textContent='Windgegevens niet beschikbaar. De melding kan toch worden opgeslagen.';return null}finally{windLoading=false}}
 ['observedDate','observedTime','latitude','longitude'].forEach(id=>$(id).addEventListener('change',updateWind));
 $('newNow').onclick=()=>{reset('now');show('form')};$('newEarlier').onclick=()=>{reset('earlier');show('form')};$('cancel').onclick=()=>{reset('now');show('home')};$('backHome').onclick=()=>show('home');
 $('gps').onclick=()=>{if(!navigator.geolocation){$('gpsState').textContent='GPS wordt niet ondersteund.';return} $('gps').disabled=true;$('gpsState').textContent='📍 Locatie bepalen…';navigator.geolocation.getCurrentPosition(async p=>{coords={lat:p.coords.latitude,lon:p.coords.longitude};$('latitude').value=coords.lat.toFixed(6);$('longitude').value=coords.lon.toFixed(6);$('gpsState').textContent='✓ Locatie bepaald';$('gps').disabled=false;await updateWind()},()=>{$('gpsState').textContent='Locatie niet beschikbaar. Bij een eerdere melding kun je coördinaten invullen.';$('gps').disabled=false},{enableHighAccuracy:true,timeout:15000,maximumAge:60000})};
+$('openMapBtn').onclick=()=>{
+  $('mapPickerBox').classList.remove('hidden');
+
+  initializeLocationMap();
+
+  // Leaflet moet na het zichtbaar maken de afmetingen opnieuw berekenen.
+  setTimeout(()=>{
+    locationMap.invalidateSize();
+
+    if(coords){
+      locationMap.setView([coords.lat,coords.lon],17);
+
+      if(locationMarker){
+        locationMarker.setLatLng([coords.lat,coords.lon]);
+      }else{
+        locationMarker=L.marker(
+          [coords.lat,coords.lon]
+        ).addTo(locationMap);
+      }
+    }else{
+      locationMap.setView(
+        [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
+        16
+      );
+    }
+  },50);
+};
+
+$('closeMapBtn').onclick=()=>{
+  $('mapPickerBox').classList.add('hidden');
+};
 async function upload(r){if(!db)return false;const row={id:r.id,observed_at:r.ts,intensity:r.intensity,intensity_label:r.label,odor_type:r.odor||null,latitude:r.lat,longitude:r.lon,comment:r.comment||null,wind_speed_kmh:r.windSpeedKmh??null,wind_direction_deg:r.windDirectionDeg??null,wind_direction_compass:r.windDirectionCompass??null,weather_observed_at:r.weatherObservedAt||null,weather_source:r.weatherSource||null,temperature_c:r.temperatureC??null,relative_humidity_pct:r.relativeHumidityPct??null,pressure_msl_hpa:r.pressureMslHpa??null,precipitation_mm:r.precipitationMm??null,cloud_cover_pct:r.cloudCoverPct??null,observation_mode:r.observationMode||null,user_id:currentUser?.id||null};const {error}=await db.from('odor_reports').insert(row);if(error)console.error(error);return !error}
 $('save').onclick=async()=>{if(level===null)return alert('Kies eerst de intensiteit.');const moment=observedDate();if(!moment)return alert('Vul een geldige datum en tijd in.');if(moment>new Date())return alert('Je kunt geen melding in de toekomst registreren.');const loc=locationValues();if(timeMode==='earlier'&&!loc)return alert('Gebruik GPS of vul de coördinaten van de waarnemingslocatie in.');if(windLoading)return alert('De windgegevens worden nog opgehaald.');if(loc&&!wind)await updateWind();const odorValue=selectedOdor||$('otherOdor').value.trim();const r={id:crypto.randomUUID(),userId:currentUser?.id||null,ts:moment.toISOString(),intensity:level,label:D[level][0],odor:odorValue,lat:loc?.lat??null,lon:loc?.lon??null,comment:$('comment').value.trim(),windSpeedKmh:wind?.windSpeedKmh??null,windDirectionDeg:wind?.windDirectionDeg??null,windDirectionCompass:wind?.windDirectionCompass??null,weatherObservedAt:wind?.weatherObservedAt??null,weatherSource:wind?.weatherSource??null,temperatureC:wind?.temperatureC??null,relativeHumidityPct:wind?.relativeHumidityPct??null,pressureMslHpa:wind?.pressureMslHpa??null,precipitationMm:wind?.precipitationMm??null,cloudCoverPct:wind?.cloudCoverPct??null,observationMode:timeMode,createdAt:new Date().toISOString(),endedAt:null,synced:false};const a=local();a.unshift(r);saveLocal(a);const ok=await upload(r);if(ok){r.synced=true;saveLocal(a)}$('successText').textContent=ok?'De melding is online opgeslagen.':'De melding is lokaal bewaard en wordt later gesynchroniseerd.';reset();show('success')};
 async function syncAll(){
