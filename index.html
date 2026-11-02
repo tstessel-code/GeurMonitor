@@ -161,6 +161,48 @@ body.app-loading > nav {
 .deleteConfirmBtn:hover{
   background:#a91f1f;
 }  
+.formSection{
+  margin-top:16px;
+  padding:16px;
+  border:1px solid #dce7e4;
+  border-radius:16px;
+  background:#f8fbfa;
+}
+
+.formSection:first-of-type{
+  margin-top:12px;
+}
+
+.formSectionTitle{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 12px;
+  color:#0f5f59;
+  font-size:17px;
+  font-weight:800;
+}
+
+.formSectionTitle .sectionNumber{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 26px;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  background:#0f766e;
+  color:#fff;
+  font-size:13px;
+}
+
+.formSection > label:first-of-type{
+  margin-top:0;
+}
+
+.formActions{
+  margin-top:18px;
+}  
 </style>
 </head>
 <body class="app-loading">
@@ -193,11 +235,196 @@ body.app-loading > nav {
  <section id="form" class="hidden"><div class="card"><h2>Nieuwe geurmelding</h2>
 <div id="modeTitle" class="box"><b>Registratie op dit moment</b></div>
 <div id="earlierBox" class="box hidden"><div class="fields"><div><label for="observedDate">Datum</label><input id="observedDate" type="date"></div><div><label for="observedTime">Tijd</label><input id="observedTime" type="time"></div></div><p class="muted">Kies het werkelijke moment waarop je de geur hebt waargenomen.</p></div>
-<label>Intensiteit</label><div class="levels" id="levels"></div>
-<label>Geurtype</label><div id="odorGrid" class="odorGrid"><button type="button" class="odorTile" data-odor="Rotte eieren"><span class="odorIcon">🥚</span>Rotte eieren</button><button type="button" class="odorTile" data-odor="Rotte ui / look"><span class="odorIcon">🧅</span>Rotte ui / look</button><button type="button" class="odorTile" data-odor="Rotte kool"><span class="odorIcon">🥬</span>Rotte kool</button><button type="button" class="odorTile" data-odor="Riool / putlucht"><span class="odorIcon">🚽</span>Riool / putlucht</button><button type="button" class="odorTile" data-odor="Mest / gier"><span class="odorIcon">💩</span>Mest / gier</button><button type="button" class="odorTile" data-odor="Compost / rottend groen"><span class="odorIcon">🌿</span>Compost / rottend groen</button><button type="button" class="odorTile" data-odor="Rottend organisch materiaal"><span class="odorIcon">🤢</span>Rottend organisch materiaal</button><button type="button" class="odorTile" data-odor="Ammoniak / urine"><span class="odorIcon">🧪</span>Ammoniak / urine</button><button type="button" class="odorTile" data-odor="Gistend / gegist"><span class="odorIcon">🍺</span>Gistend / gegist</button><button type="button" class="odorTile" data-odor="Zuur / ranzig"><span class="odorIcon">🍋</span>Zuur / ranzig</button><button type="button" class="odorTile" data-odor="Andere geur"><span class="odorIcon">✏️</span>Andere geur</button></div><div id="otherOdorBox" class="box hidden"><label for="otherOdor">Andere geur</label><input id="otherOdor" type="text" maxlength="100" placeholder="Beschrijf de geur kort"></div>
-<label>Locatie van de waarneming</label><button class="btn secondary" id="gps">📍 Huidige locatie gebruiken</button><div id="manualLocation" class="box hidden"><div class="fields"><div><label for="latitude">Breedtegraad</label><input id="latitude" type="number" step="any" placeholder="50.000000"></div><div><label for="longitude">Lengtegraad</label><input id="longitude" type="number" step="any" placeholder="4.000000"></div></div><p class="muted">Vul voor een eerdere waarneming de coördinaten van die locatie in als je nu ergens anders bent.</p></div><button class="btn secondary hidden" id="toggleManual">Coördinaten handmatig invullen</button><div class="muted" id="gpsState">Nog geen locatie.</div><div class="windbox" id="weatherPanel"><div class="muted" id="windState">Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.</div><div class="weatherGrid"><div>💨 <b>Windsnelheid</b><span id="wSpeed">–</span></div><div>🧭 <b>Windrichting</b><span id="wDirection">–</span></div><div>🌡️ <b>Temperatuur</b><span id="wTemperature">–</span></div><div>💧 <b>Luchtvochtigheid</b><span id="wHumidity">–</span></div><div>📈 <b>Luchtdruk</b><span id="wPressure">–</span></div><div>🌧️ <b>Neerslag</b><span id="wPrecipitation">–</span></div><div>☁️ <b>Bewolking</b><span id="wCloud">–</span></div></div></div>
-<label for="comment">Opmerking (optioneel)</label><textarea id="comment" maxlength="500" placeholder="Bijvoorbeeld: sterke geur buiten op het terras"></textarea>
-<button class="btn" id="save">Melding opslaan</button><button class="btn secondary" id="cancel">Annuleren</button></div></section>
+<div class="formSection">
+  <h3 class="formSectionTitle">
+    <span class="sectionNumber">1</span>
+    Intensiteit
+  </h3>
+
+  <div class="levels" id="levels"></div>
+</div>
+
+<div class="formSection">
+  <h3 class="formSectionTitle">
+    <span class="sectionNumber">2</span>
+    Geurtype
+  </h3>
+
+  <div id="odorGrid" class="odorGrid">
+    <button type="button" class="odorTile" data-odor="Rotte eieren">
+      <span class="odorIcon">🥚</span>Rotte eieren
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Rotte ui / look">
+      <span class="odorIcon">🧅</span>Rotte ui / look
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Rotte kool">
+      <span class="odorIcon">🥬</span>Rotte kool
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Riool / putlucht">
+      <span class="odorIcon">🚽</span>Riool / putlucht
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Mest / gier">
+      <span class="odorIcon">💩</span>Mest / gier
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Compost / rottend groen">
+      <span class="odorIcon">🌿</span>Compost / rottend groen
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Rottend organisch materiaal">
+      <span class="odorIcon">🤢</span>Rottend organisch materiaal
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Ammoniak / urine">
+      <span class="odorIcon">🧪</span>Ammoniak / urine
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Gistend / gegist">
+      <span class="odorIcon">🍺</span>Gistend / gegist
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Zuur / ranzig">
+      <span class="odorIcon">🍋</span>Zuur / ranzig
+    </button>
+
+    <button type="button" class="odorTile" data-odor="Andere geur">
+      <span class="odorIcon">✏️</span>Andere geur
+    </button>
+  </div>
+
+  <div id="otherOdorBox" class="box hidden">
+    <label for="otherOdor">Andere geur</label>
+    <input
+      id="otherOdor"
+      type="text"
+      maxlength="100"
+      placeholder="Beschrijf de geur kort">
+  </div>
+</div>
+
+<div class="formSection">
+  <h3 class="formSectionTitle">
+    <span class="sectionNumber">3</span>
+    Locatie
+  </h3>
+
+  <button class="btn secondary" id="gps" type="button">
+    📍 Huidige locatie gebruiken
+  </button>
+
+  <div id="manualLocation" class="box hidden">
+    <div class="fields">
+      <div>
+        <label for="latitude">Breedtegraad</label>
+        <input
+          id="latitude"
+          type="number"
+          step="any"
+          placeholder="50.000000">
+      </div>
+
+      <div>
+        <label for="longitude">Lengtegraad</label>
+        <input
+          id="longitude"
+          type="number"
+          step="any"
+          placeholder="4.000000">
+      </div>
+    </div>
+
+    <p class="muted">
+      Vul voor een eerdere waarneming de coördinaten van die locatie in
+      als je nu ergens anders bent.
+    </p>
+  </div>
+
+  <button class="btn secondary hidden" id="toggleManual" type="button">
+    Coördinaten handmatig invullen
+  </button>
+
+  <div class="muted" id="gpsState">
+    Nog geen locatie.
+  </div>
+</div>
+
+<div class="formSection">
+  <h3 class="formSectionTitle">
+    <span class="sectionNumber">4</span>
+    Weergegevens
+  </h3>
+
+  <div class="windbox" id="weatherPanel">
+    <div class="muted" id="windState">
+      Weergegevens worden automatisch opgehaald wanneer tijdstip en
+      locatie beschikbaar zijn.
+    </div>
+
+    <div class="weatherGrid">
+      <div>
+        💨 <b>Windsnelheid</b>
+        <span id="wSpeed">–</span>
+      </div>
+
+      <div>
+        🧭 <b>Windrichting</b>
+        <span id="wDirection">–</span>
+      </div>
+
+      <div>
+        🌡️ <b>Temperatuur</b>
+        <span id="wTemperature">–</span>
+      </div>
+
+      <div>
+        💧 <b>Luchtvochtigheid</b>
+        <span id="wHumidity">–</span>
+      </div>
+
+      <div>
+        📈 <b>Luchtdruk</b>
+        <span id="wPressure">–</span>
+      </div>
+
+      <div>
+        🌧️ <b>Neerslag</b>
+        <span id="wPrecipitation">–</span>
+      </div>
+
+      <div>
+        ☁️ <b>Bewolking</b>
+        <span id="wCloud">–</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="formSection">
+  <h3 class="formSectionTitle">
+    <span class="sectionNumber">5</span>
+    Opmerking
+  </h3>
+
+  <label for="comment">Aanvullende informatie (optioneel)</label>
+
+  <textarea
+    id="comment"
+    maxlength="500"
+    placeholder="Bijvoorbeeld: sterke geur buiten op het terras"></textarea>
+</div>
+<div class="formActions">
+  <button class="btn" id="save" type="button">
+    Melding opslaan
+  </button>
+
+  <button class="btn secondary" id="cancel" type="button">
+    Annuleren
+  </button>
+</div>
 <section id="success" class="hidden"><div class="card success"><div class="check">✓</div><h2>Melding succesvol opgeslagen</h2><p id="successText">De melding staat online.</p><button class="btn" id="backHome">Terug naar hoofdpagina</button></div></section>
 <section id="reports" class="hidden"><div class="card"><div class="topline"><h2>Meldingen</h2><button class="btn secondary" style="width:auto;margin:0;padding:8px 12px" id="sync">Synchroniseren</button></div><div id="list"></div></div></section>
 <section id="dashboard" class="hidden"><div class="card"><h2>Dashboard</h2><div class="stats"><div class="stat"><b id="today">0</b>Vandaag</div><div class="stat"><b id="week">0</b>7 dagen</div><div class="stat"><b id="max">–</b>Hoogste</div><div class="stat"><b id="common">–</b>Meest gemeld</div></div></div></section>
