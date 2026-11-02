@@ -1993,12 +1993,31 @@
         async function checkAdminAccess() {
           try {
             const data = await callAdminFunction("check");
+        
             isAdmin = data?.isAdmin === true;
+        
+            const adminBtn = document.getElementById("adminUsersBtn");
+        
+            if (adminBtn) {
+              if (isAdmin) {
+                adminBtn.classList.remove("hidden");
+              } else {
+                adminBtn.classList.add("hidden");
+              }
+            }
+        
+            console.log("ADMIN CHECK:", isAdmin);
           } catch (error) {
-            console.info("Geen adminrechten of adminfunctie nog niet actief.", error);
+            console.error("ADMIN CHECK ERROR:", error);
+        
             isAdmin = false;
+        
+            const adminBtn = document.getElementById("adminUsersBtn");
+        
+            if (adminBtn) {
+              adminBtn.classList.add("hidden");
+            }
           }
-          updateAuthUI();
         }
         function renderAdminUsers(users = []) {
           const list = $("adminUsersList");
