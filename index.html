@@ -1725,14 +1725,32 @@
 
           // Indien een eindtijd geregistreerd werd, toon de totale duur.
           if (r.endedAt) {
+            const remaining =
+              r.userId === currentUser?.id
+                ? remainingEndTime(r.ts)
+                : null;
+          
             endInfo = `
-        <div class="endTimeArea">
-          <span class="durationInfo">
-            Duur: ${formatDuration(r.ts, r.endedAt)}
-          </span>
-        </div>`;
+              <div class="endTimeArea" style="gap:10px; flex-wrap:wrap;">
+                <span class="durationInfo">
+                  Duur: ${formatDuration(r.ts, r.endedAt)}
+                </span>
+          
+                ${
+                  remaining
+                    ? `
+                      <button
+                        type="button"
+                        class="endTimeAction"
+                        data-end-report="${r.id}"
+                      >
+                        Eindtijd wijzigen
+                      </button>
+                    `
+                    : ""
+                }
+              </div>`;
           }
-
           // Bij elke eigen melding zonder eindtijd bekijken we
           // of de 24-uursperiode nog actief is.
           else if (r.userId === currentUser?.id && r.ts) {
@@ -1842,12 +1860,44 @@
 
         endTimeReportId = reportId;
 
-        $("customEndTime").value = localDateTimeValue(maximumEnd);
-        $("customEndTime").min = localDateTimeValue(observed);
-        $("customEndTime").max = localDateTimeValue(maximumEnd);
-
-        $("endTimeMessage").textContent = "";
-        $("endTimeModal").classList.remove("hidden");
+        $("endTimeModal")
+          .querySelector("h2")
+          .textContent =
+            r.endedAt
+              ? "Eindtijd wijzigen"
+              : "Eindtijd registreren";
+        
+        $("endTimeModal")
+          .querySelector("p.muted")
+          .textContent =
+            r.endedAt
+              ? "Pas de geregistreerde eindtijd aan."
+              : "Wanneer is de geurhinder gestopt?";
+        
+        const existingEnd =
+          r.endedAt
+            ? new Date(r.endedAt)
+            : null;
+        
+        const editorValue =
+          existingEnd &&
+          !Number.isNaN(existingEnd.getTime())
+            ? new Date(
+                Math.min(
+                  existingEnd.getTime(),
+                  maximumEnd.getTime()
+                )
+              )
+            : maximumEnd;
+        
+        $("customEndTime").value =
+          localDateTimeValue(editorValue);
+        
+        $("customEndTime").min =
+          localDateTimeValue(observed);
+        
+        $("customEndTime").max =
+          localDateTimeValue(maximumEnd);
       }
 
       async function saveReportEndTime(reportId, endDate) {
