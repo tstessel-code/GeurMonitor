@@ -273,7 +273,21 @@ body.app-loading > nav {
 
  <section id="form" class="hidden"><div class="card"><h2>Nieuwe geurmelding</h2>
 <div id="modeTitle" class="box"><b>Registratie op dit moment</b></div>
-<div id="earlierBox" class="box hidden"><div class="fields"><div><label for="observedDate">Datum</label><input id="observedDate" type="date"></div><div><label for="observedTime">Tijd</label><input id="observedTime" type="time"></div></div><p class="muted">Kies het werkelijke moment waarop je de geur hebt waargenomen.</p></div>
+<div id="earlierBox" class="box hidden">
+
+  <div>
+    <label for="observedDateTime">Begin waarneming</label>
+    <input id="observedDateTime" type="datetime-local">
+  </div>
+
+  <div style="margin-top:12px;">
+    <label for="endDateTime">Einde waarneming</label>
+    <input id="endDateTime" type="datetime-local">
+  </div>
+
+  <p class="muted">Eindtijd is optioneel.</p>
+
+</div>
 <div class="formSection">
   <h3 class="formSectionTitle">
     <span class="sectionNumber">1</span>
