@@ -654,16 +654,64 @@ function show(id){document.querySelectorAll('main section').forEach(s=>s.classLi
 document.querySelectorAll('.odorTile').forEach(button=>{button.onclick=()=>{const name=button.dataset.odor;document.querySelectorAll('.odorTile').forEach(tile=>tile.classList.remove('sel'));button.classList.add('sel');if(name==='Andere geur'){selectedOdor='';$('otherOdorBox').classList.remove('hidden');$('otherOdor').focus()}else{selectedOdor=name;$('otherOdor').value='';$('otherOdorBox').classList.add('hidden')}}});
 D.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.className='level';b.style.background=d[1]+'26';b.innerHTML=`<b>${i}</b>${d[0]}`;b.onclick=()=>{level=i;document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};$('levels').appendChild(b)});
 function pad(n){return String(n).padStart(2,'0')}function dateParts(d=new Date()){return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,time:`${pad(d.getHours())}:${pad(d.getMinutes())}`}}
-function observedDate(){if(timeMode==='now')return new Date();if(!$('observedDate').value||!$('observedTime').value)return null;const d=new Date(`${$('observedDate').value}T${$('observedTime').value}:00`);return Number.isNaN(d.getTime())?null:d}
-function setMode(mode){timeMode=mode;$('earlierBox').classList.toggle('hidden',mode!=='earlier');$('modeTitle').innerHTML=mode==='earlier'?'<b>🕘 Eerdere waarneming</b>':'<b>＋ Registratie op dit moment</b>';wind=null;$('windState').textContent='Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.';['wSpeed','wDirection','wTemperature','wHumidity','wPressure','wPrecipitation','wCloud'].forEach(id=>$(id).textContent='–');}
-function reset(mode='now'){level=null;coords=null;wind=null;windLoading=false;setMode(mode);document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));document.querySelectorAll('.odorTile').forEach(x=>x.classList.remove('sel'));selectedOdor='';$('otherOdor').value='';$('otherOdorBox').classList.add('hidden');$('comment').value='';$('latitude').value='';$('longitude').value='';const p=dateParts();$('observedDate').value=p.date;$('observedDate').max=p.date;$('observedTime').value=p.time;
-$('mapPickerBox').classList.add('hidden');
+function observedDate(){
+  if(timeMode === 'now'){
+    return new Date();
+  }
 
-if(locationMarker && locationMap){
-  locationMap.removeLayer(locationMarker);
-  locationMarker=null;
+  const value = $('observedDateTime').value;
+
+  if(!value){
+    return null;
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
 }
-$('gpsState').textContent='Nog geen locatie.'}
+function setMode(mode){timeMode=mode;$('earlierBox').classList.toggle('hidden',mode!=='earlier');$('modeTitle').innerHTML=mode==='earlier'?'<b>🕘 Eerdere waarneming</b>':'<b>＋ Registratie op dit moment</b>';wind=null;$('windState').textContent='Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.';['wSpeed','wDirection','wTemperature','wHumidity','wPressure','wPrecipitation','wCloud'].forEach(id=>$(id).textContent='–');}
+function reset(mode='now'){
+  level = null;
+  coords = null;
+  wind = null;
+  windLoading = false;
+
+  setMode(mode);
+
+  document.querySelectorAll('.level').forEach(x =>
+    x.classList.remove('sel')
+  );
+
+  document.querySelectorAll('.odorTile').forEach(x =>
+    x.classList.remove('sel')
+  );
+
+  selectedOdor = '';
+
+  $('otherOdor').value = '';
+  $('otherOdorBox').classList.add('hidden');
+  $('comment').value = '';
+  $('latitude').value = '';
+  $('longitude').value = '';
+
+  const now = new Date();
+  const nowValue = localDateTimeValue(now);
+
+  $('observedDateTime').value = nowValue;
+  $('observedDateTime').max = nowValue;
+
+  $('endDateTime').value = '';
+  $('endDateTime').max = nowValue;
+
+  $('mapPickerBox').classList.add('hidden');
+
+  if(locationMarker && locationMap){
+    locationMap.removeLayer(locationMarker);
+    locationMarker = null;
+  }
+
+  $('gpsState').textContent = 'Nog geen locatie.';
+}
 function initializeLocationMap(){
   if(locationMap)return;
 
@@ -706,7 +754,24 @@ function initializeLocationMap(){
 }
 function locationValues(){if(coords)return coords;const lat=parseFloat($('latitude').value),lon=parseFloat($('longitude').value);return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null}
 async function updateWind(){const moment=observedDate(),loc=locationValues();if(!moment||!loc)return null;if(moment>new Date()){$('windState').textContent='Een toekomstig tijdstip is niet toegestaan.';wind=null;return null}windLoading=true;$('windState').textContent='💨 Windgegevens ophalen…';try{wind=await fetchWindForDateTime(loc.lat,loc.lon,moment);const deg=wind.windDirectionDeg==null?'–':Math.round(wind.windDirectionDeg)+'°';$('windState').textContent='✓ Weergegevens opgehaald';$('wSpeed').textContent=`${wind.windSpeedKmh??'–'} km/u`;$('wDirection').textContent=`${wind.windDirectionCompass??'–'} (${deg})`;$('wTemperature').textContent=`${wind.temperatureC??'–'} °C`;$('wHumidity').textContent=`${wind.relativeHumidityPct??'–'} %`;$('wPressure').textContent=`${wind.pressureMslHpa??'–'} hPa`;$('wPrecipitation').textContent=`${wind.precipitationMm??'–'} mm`;$('wCloud').textContent=`${wind.cloudCoverPct??'–'} %`;return wind}catch(error){console.error(error);wind=null;$('windState').textContent='Windgegevens niet beschikbaar. De melding kan toch worden opgeslagen.';return null}finally{windLoading=false}}
-['observedDate','observedTime','latitude','longitude'].forEach(id=>$(id).addEventListener('change',updateWind));
+['observedDateTime','latitude','longitude'].forEach(id => {
+  $(id).addEventListener('change', updateWind);
+});
+function earlierEndDate(){
+  if(timeMode !== 'earlier'){
+    return null;
+  }
+
+  const value = $('endDateTime').value;
+
+  if(!value){
+    return null;
+  }
+
+  const date = new Date(value);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}  
 $('newNow').onclick=()=>{reset('now');show('form')};$('newEarlier').onclick=()=>{reset('earlier');show('form')};$('cancel').onclick=()=>{reset('now');show('home')};$('backHome').onclick=()=>show('home');
 $('gps').onclick=()=>{if(!navigator.geolocation){$('gpsState').textContent='GPS wordt niet ondersteund.';return} $('gps').disabled=true;$('gpsState').textContent='📍 Locatie bepalen…';navigator.geolocation.getCurrentPosition(async p=>{coords={lat:p.coords.latitude,lon:p.coords.longitude};$('latitude').value=coords.lat.toFixed(6);$('longitude').value=coords.lon.toFixed(6);$('gpsState').textContent='✓ Locatie bepaald';$('gps').disabled=false;await updateWind()},()=>{$('gpsState').textContent='Locatie niet beschikbaar. Bij een eerdere melding kun je coördinaten invullen.';$('gps').disabled=false},{enableHighAccuracy:true,timeout:15000,maximumAge:60000})};
 $('openMapBtn').onclick=()=>{
@@ -740,8 +805,97 @@ $('openMapBtn').onclick=()=>{
 $('closeMapBtn').onclick=()=>{
   $('mapPickerBox').classList.add('hidden');
 };
-async function upload(r){if(!db)return false;const row={id:r.id,observed_at:r.ts,intensity:r.intensity,intensity_label:r.label,odor_type:r.odor||null,latitude:r.lat,longitude:r.lon,comment:r.comment||null,wind_speed_kmh:r.windSpeedKmh??null,wind_direction_deg:r.windDirectionDeg??null,wind_direction_compass:r.windDirectionCompass??null,weather_observed_at:r.weatherObservedAt||null,weather_source:r.weatherSource||null,temperature_c:r.temperatureC??null,relative_humidity_pct:r.relativeHumidityPct??null,pressure_msl_hpa:r.pressureMslHpa??null,precipitation_mm:r.precipitationMm??null,cloud_cover_pct:r.cloudCoverPct??null,observation_mode:r.observationMode||null,user_id:currentUser?.id||null};const {error}=await db.from('odor_reports').insert(row);if(error)console.error(error);return !error}
-$('save').onclick=async()=>{if(level===null)return alert('Kies eerst de intensiteit.');const moment=observedDate();if(!moment)return alert('Vul een geldige datum en tijd in.');if(moment>new Date())return alert('Je kunt geen melding in de toekomst registreren.');const loc=locationValues();if(timeMode==='earlier'&&!loc)return alert('Gebruik GPS of vul de coördinaten van de waarnemingslocatie in.');if(windLoading)return alert('De windgegevens worden nog opgehaald.');if(loc&&!wind)await updateWind();const odorValue=selectedOdor||$('otherOdor').value.trim();const r={id:crypto.randomUUID(),userId:currentUser?.id||null,ts:moment.toISOString(),intensity:level,label:D[level][0],odor:odorValue,lat:loc?.lat??null,lon:loc?.lon??null,comment:$('comment').value.trim(),windSpeedKmh:wind?.windSpeedKmh??null,windDirectionDeg:wind?.windDirectionDeg??null,windDirectionCompass:wind?.windDirectionCompass??null,weatherObservedAt:wind?.weatherObservedAt??null,weatherSource:wind?.weatherSource??null,temperatureC:wind?.temperatureC??null,relativeHumidityPct:wind?.relativeHumidityPct??null,pressureMslHpa:wind?.pressureMslHpa??null,precipitationMm:wind?.precipitationMm??null,cloudCoverPct:wind?.cloudCoverPct??null,observationMode:timeMode,createdAt:new Date().toISOString(),endedAt:null,synced:false};const a=local();a.unshift(r);saveLocal(a);const ok=await upload(r);if(ok){r.synced=true;saveLocal(a)}$('successText').textContent=ok?'De melding is online opgeslagen.':'De melding is lokaal bewaard en wordt later gesynchroniseerd.';reset();show('success')};
+async function upload(r){if(!db)return false;const row={id:r.id,observed_at:r.ts,ended_at:r.endedAt||null,intensity:r.intensity,intensity_label:r.label,odor_type:r.odor||null,latitude:r.lat,longitude:r.lon,comment:r.comment||null,wind_speed_kmh:r.windSpeedKmh??null,wind_direction_deg:r.windDirectionDeg??null,wind_direction_compass:r.windDirectionCompass??null,weather_observed_at:r.weatherObservedAt||null,weather_source:r.weatherSource||null,temperature_c:r.temperatureC??null,relative_humidity_pct:r.relativeHumidityPct??null,pressure_msl_hpa:r.pressureMslHpa??null,precipitation_mm:r.precipitationMm??null,cloud_cover_pct:r.cloudCoverPct??null,observation_mode:r.observationMode||null,user_id:currentUser?.id||null};const {error}=await db.from('odor_reports').insert(row);if(error)console.error(error);return !error}
+$('save').onclick = async() => {
+  if(level === null){
+    return alert('Kies eerst de intensiteit.');
+  }
+
+  const moment = observedDate();
+
+  if(!moment){
+    return alert('Vul een geldige begindatum en begintijd in.');
+  }
+
+  if(moment > new Date()){
+    return alert('Je kunt geen melding in de toekomst registreren.');
+  }
+
+  const endMoment = earlierEndDate();
+
+  if(endMoment && endMoment < moment){
+    return alert(
+      'De eindtijd kan niet vóór het begin van de waarneming liggen.'
+    );
+  }
+
+  if(endMoment && endMoment > new Date()){
+    return alert('De eindtijd kan niet in de toekomst liggen.');
+  }
+
+  const loc = locationValues();
+
+  if(timeMode === 'earlier' && !loc){
+    return alert(
+      'Gebruik GPS of kies de locatie van de waarneming op de kaart.'
+    );
+  }
+
+  if(windLoading){
+    return alert('De windgegevens worden nog opgehaald.');
+  }
+
+  if(loc && !wind){
+    await updateWind();
+  }
+
+  const odorValue =
+    selectedOdor || $('otherOdor').value.trim();
+
+  const r = {
+    id: crypto.randomUUID(),
+    userId: currentUser?.id || null,
+    ts: moment.toISOString(),
+    intensity: level,
+    label: D[level][0],
+    odor: odorValue,
+    lat: loc?.lat ?? null,
+    lon: loc?.lon ?? null,
+    comment: $('comment').value.trim(),
+    windSpeedKmh: wind?.windSpeedKmh ?? null,
+    windDirectionDeg: wind?.windDirectionDeg ?? null,
+    windDirectionCompass: wind?.windDirectionCompass ?? null,
+    weatherObservedAt: wind?.weatherObservedAt ?? null,
+    weatherSource: wind?.weatherSource ?? null,
+    temperatureC: wind?.temperatureC ?? null,
+    relativeHumidityPct: wind?.relativeHumidityPct ?? null,
+    pressureMslHpa: wind?.pressureMslHpa ?? null,
+    precipitationMm: wind?.precipitationMm ?? null,
+    cloudCoverPct: wind?.cloudCoverPct ?? null,
+    observationMode: timeMode,
+    createdAt: new Date().toISOString(),
+    endedAt: endMoment ? endMoment.toISOString() : null,
+    synced: false
+  };
+
+  const reports = local();
+  reports.unshift(r);
+  saveLocal(reports);
+
+  const ok = await upload(r);
+
+  if(ok){
+    r.synced = true;
+    saveLocal(reports);
+  }
+
+  $('successText').textContent = ok
+    ? 'De melding is online opgeslagen.'
+    : 'De melding is lokaal bewaard en wordt later gesynchroniseerd.';
+
+  reset();
+  show('success');
+};
 async function syncAll(){
   let a=local();
 
