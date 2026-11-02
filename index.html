@@ -1941,7 +1941,7 @@
 
         const { error } = await db.rpc("end_odor_report", {
           report_id: reportId,
-          new_ended_at: endDate.toISOString(),
+          end_time: endDate.toISOString(),
         });
 
         if (error) {
