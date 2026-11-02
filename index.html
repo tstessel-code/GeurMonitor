@@ -517,9 +517,6 @@ function render(a=local()){
 
   l.innerHTML=a.length?'':'<p class="muted">Nog geen meldingen.</p>';
 
-  // De eerste melding in de lijst is de meest recente melding.
-  const latestId=a.length ? a[0].id : null;
-
   a.forEach(r=>{
     const e=document.createElement('div');
     e.className='item';
@@ -641,9 +638,9 @@ function openEndTimeEditor(reportId){
 
   if(!r)return;
 
-  const remaining=r.createdAt
-    ? remainingEndTime(r.createdAt)
-    : null;
+  const remaining=r.ts
+  ? remainingEndTime(r.ts)
+  : null;
 
   if(!remaining){
     alert('De periode om een eindtijd toe te voegen is verstreken.');
