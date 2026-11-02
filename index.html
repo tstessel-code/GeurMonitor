@@ -822,18 +822,15 @@ $('save').onclick = async() => {
   }
 
   const endMoment = earlierEndDate();
-
-  const endMoment = earlierEndDate();
-
 if(endMoment && endMoment < moment){
   return alert(
     'De eindtijd kan niet vóór het begin van de waarneming liggen.'
   );
 }
 
-if(endMoment && (endMoment - moment) > 12 * 60 * 60 * 1000){
+if(endMoment && (endMoment - moment) > 24 * 60 * 60 * 1000){
   return alert(
-    'Een waarneming mag maximaal 12 uur duren.'
+    'Een waarneming mag maximaal 24 uur duren.'
   );
 }
 
