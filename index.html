@@ -1063,8 +1063,9 @@
 
         if (currentUser) {
           show("home");
+          await checkAdminAccess();
         }
-
+        
         document.body.classList.remove("app-loading");
       }
       checkAuth();
@@ -1099,6 +1100,7 @@
         console.log("LOGIN OK:", currentUser.email);
         updateAuthUI();
         show("home");
+        await checkAdminAccess();
       }
 
       $("loginBtn").onclick = login;
@@ -1108,6 +1110,8 @@
           await db.auth.signOut();
         }
         currentUser = null;
+        isAdmin = false;
+        $("adminUsersBtn").classList.add("hidden");
         updateAuthUI();
       };
       function show(id) {
