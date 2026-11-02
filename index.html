@@ -2023,43 +2023,193 @@
             }
           }
         }
+        function formatAdminDate(value) {
+          if (!value) return "Nog niet";
+        
+          const date = new Date(value);
+        
+          if (Number.isNaN(date.getTime())) {
+            return "Onbekend";
+          }
+        
+          return date.toLocaleString("nl-BE", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+        
         function renderAdminUsers(users = []) {
           const list = $("adminUsersList");
-          list.innerHTML = users.length ? "" : '<p class="muted">Geen gebruikers gevonden.</p>';
+        
+          list.innerHTML = users.length
+            ? ""
+            : '<p class="muted">Geen gebruikers gevonden.</p>';
+        
           users.forEach((user) => {
             const blocked = !!user.blocked;
             const ownAccount = user.id === currentUser?.id;
+            const adminAccount = user.role === "admin";
+        
+            const displayEmail =
+              `${esc(user.email || "Geen e-mailadres")}` +
+              `${adminAccount ? " (admin)" : ""}`;
+        
             const card = document.createElement("div");
             card.className = "userCard";
+        
+            let actions = "";
+        
+            // Eigen account: nooit blokkeren of verwijderen
+            if (ownAccount) {
+              actions = `
+                <div class="muted"
+                     style="margin-top:10px;font-weight:700">
+                  Dit is je huidige account.
+                  Blokkeren en verwijderen zijn uitgeschakeld.
+                </div>
+              `;
+            }
+        
+            // Andere admins beschermen we voorlopig ook
+            else if (adminAccount) {
+              actions = `
+                <div class="muted"
+                     style="margin-top:10px;font-weight:700">
+                  Beheerdersaccount beschermd.
+                </div>
+              `;
+            }
+        
+            // Gewone gebruiker
+            else {
+              actions = `
+                <div class="userActions">
+        
+                  <button
+                    class="btn secondary"
+                    data-toggle-user="${esc(user.id)}"
+                    data-blocked="${blocked}"
+                    type="button"
+                  >
+                    ${blocked ? "Deblokkeren" : "Blokkeren"}
+                  </button>
+        
+                  <button
+                    class="btn danger"
+                    data-remove-user="${esc(user.id)}"
+                    data-email="${esc(user.email || "")}"
+                    type="button"
+                  >
+                    Verwijderen
+                  </button>
+        
+                </div>
+              `;
+            }
+        
             card.innerHTML = `
               <div class="userHeader">
+        
                 <div>
-                  <div class="userEmail">${esc(user.email || "Geen e-mailadres")}</div>
-                  <div class="muted">Aangemaakt: ${user.created_at ? new Date(user.created_at).toLocaleString("nl-BE") : "–"}</div>
+        
+                  <div class="userEmail">
+                    ${displayEmail}
+                  </div>
+        
+                  <div class="muted">
+                    Aangemaakt:
+                    ${formatAdminDate(user.created_at)}
+                  </div>
+        
+                  <div class="muted">
+                    Laatste login:
+                    ${formatAdminDate(user.last_sign_in_at)}
+                  </div>
+        
+                  <div class="muted">
+                    Laatste melding:
+                    ${formatAdminDate(user.last_report_at)}
+                  </div>
+        
                 </div>
-                <span class="statusBadge ${blocked ? "statusBlocked" : "statusActive"}">${blocked ? "Geblokkeerd" : "Actief"}</span>
+        
+                <span
+                  class="statusBadge ${
+                    blocked
+                      ? "statusBlocked"
+                      : "statusActive"
+                  }"
+                >
+                  ${blocked ? "Geblokkeerd" : "Actief"}
+                </span>
+        
               </div>
-              <div class="userActions">
-                <button class="btn secondary" data-toggle-user="${esc(user.id)}" data-blocked="${blocked}" ${ownAccount ? "disabled" : ""}>
-                  ${blocked ? "Deblokkeren" : "Blokkeren"}
-                </button>
-                <button class="btn danger" data-remove-user="${esc(user.id)}" data-email="${esc(user.email || "")}" ${ownAccount ? "disabled" : ""}>Verwijderen</button>
-              </div>`;
+        
+              ${actions}
+            `;
+        
             list.appendChild(card);
           });
-          list.querySelectorAll("[data-toggle-user]").forEach((button) => {
-            button.onclick = async () => {
-              const block = button.dataset.blocked !== "true";
-              if (!confirm(`Wil je deze gebruiker ${block ? "blokkeren" : "deblokkeren"}?`)) return;
-              await runAdminAction(block ? "block" : "unblock", { userId: button.dataset.toggleUser });
-            };
-          });
-          list.querySelectorAll("[data-remove-user]").forEach((button) => {
-            button.onclick = async () => {
-              if (!confirm(`Gebruiker ${button.dataset.email} definitief verwijderen?`)) return;
-              await runAdminAction("delete", { userId: button.dataset.removeUser });
-            };
-          });
+        
+          /*
+           * Blokkeren / deblokkeren
+           */
+          list
+            .querySelectorAll("[data-toggle-user]")
+            .forEach((button) => {
+        
+              button.onclick = async () => {
+                const block =
+                  button.dataset.blocked !== "true";
+        
+                const confirmed = confirm(
+                  `Wil je deze gebruiker ${
+                    block
+                      ? "blokkeren"
+                      : "deblokkeren"
+                  }?`
+                );
+        
+                if (!confirmed) return;
+        
+                await runAdminAction(
+                  block ? "block" : "unblock",
+                  {
+                    userId:
+                      button.dataset.toggleUser,
+                  }
+                );
+              };
+            });
+        
+          /*
+           * Verwijderen
+           */
+          list
+            .querySelectorAll("[data-remove-user]")
+            .forEach((button) => {
+        
+              button.onclick = async () => {
+                const confirmed = confirm(
+                  `Gebruiker ${
+                    button.dataset.email
+                  } definitief verwijderen?`
+                );
+        
+                if (!confirmed) return;
+        
+                await runAdminAction(
+                  "delete",
+                  {
+                    userId:
+                      button.dataset.removeUser,
+                  }
+                );
+              };
+            });
         }
         async function loadAdminUsers() {
           if (!isAdmin) return;
