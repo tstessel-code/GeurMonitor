@@ -1725,30 +1725,11 @@
 
           // Indien een eindtijd geregistreerd werd, toon de totale duur.
           if (r.endedAt) {
-            const remaining =
-              r.userId === currentUser?.id
-                ? remainingEndTime(r.ts)
-                : null;
-          
             endInfo = `
-              <div class="endTimeArea" style="gap:10px; flex-wrap:wrap;">
+              <div class="endTimeArea">
                 <span class="durationInfo">
                   Duur: ${formatDuration(r.ts, r.endedAt)}
                 </span>
-          
-                ${
-                  remaining
-                    ? `
-                      <button
-                        type="button"
-                        class="endTimeAction"
-                        data-end-report="${r.id}"
-                      >
-                        Eindtijd wijzigen
-                      </button>
-                    `
-                    : ""
-                }
               </div>`;
           }
           // Bij elke eigen melding zonder eindtijd bekijken we
