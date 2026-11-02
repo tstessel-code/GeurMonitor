@@ -1898,6 +1898,10 @@
         
         $("customEndTime").max =
           localDateTimeValue(maximumEnd);
+
+        $("endTimeMessage").textContent = "";
+
+        $("endTimeModal").classList.remove("hidden");
       }
 
       async function saveReportEndTime(reportId, endDate) {
@@ -1946,7 +1950,19 @@
 
         if (error) {
           console.error("END TIME RPC ERROR:", error);
-          throw new Error("De eindtijd kon online niet worden opgeslagen.");
+        
+          const errorParts = [
+            error.message,
+            error.details,
+            error.hint,
+            error.code
+          ].filter(Boolean);
+        
+          throw new Error(
+            errorParts.length
+              ? errorParts.join(" | ")
+              : "De eindtijd kon online niet worden opgeslagen."
+          );
         }
 
         r.endedAt = endDate.toISOString();
