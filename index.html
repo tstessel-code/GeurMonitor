@@ -356,37 +356,10 @@ body.app-loading > nav {
     Kaart sluiten
   </button>
 </div>
-  <div id="manualLocation" class="box hidden">
-    <div class="fields">
-      <div>
-        <label for="latitude">Breedtegraad</label>
-        <input
-          id="latitude"
-          type="number"
-          step="any"
-          placeholder="50.000000">
-      </div>
 
-      <div>
-        <label for="longitude">Lengtegraad</label>
-        <input
-          id="longitude"
-          type="number"
-          step="any"
-          placeholder="4.000000">
-      </div>
-    </div>
-
-    <p class="muted">
-      Vul voor een eerdere waarneming de coördinaten van die locatie in
-      als je nu ergens anders bent.
-    </p>
-  </div>
-
-  <button class="btn secondary hidden" id="toggleManual" type="button">
-    Coördinaten handmatig invullen
-  </button>
-
+<input id="latitude" type="hidden">
+<input id="longitude" type="hidden">
+ 
   <div class="muted" id="gpsState">
     Nog geen locatie.
   </div>
@@ -655,8 +628,8 @@ document.querySelectorAll('.odorTile').forEach(button=>{button.onclick=()=>{cons
 D.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.className='level';b.style.background=d[1]+'26';b.innerHTML=`<b>${i}</b>${d[0]}`;b.onclick=()=>{level=i;document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};$('levels').appendChild(b)});
 function pad(n){return String(n).padStart(2,'0')}function dateParts(d=new Date()){return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,time:`${pad(d.getHours())}:${pad(d.getMinutes())}`}}
 function observedDate(){if(timeMode==='now')return new Date();if(!$('observedDate').value||!$('observedTime').value)return null;const d=new Date(`${$('observedDate').value}T${$('observedTime').value}:00`);return Number.isNaN(d.getTime())?null:d}
-function setMode(mode){timeMode=mode;$('earlierBox').classList.toggle('hidden',mode!=='earlier');$('toggleManual').classList.toggle('hidden',mode!=='earlier');$('modeTitle').innerHTML=mode==='earlier'?'<b>🕘 Eerdere waarneming</b>':'<b>＋ Registratie op dit moment</b>';wind=null;$('windState').textContent='Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.';['wSpeed','wDirection','wTemperature','wHumidity','wPressure','wPrecipitation','wCloud'].forEach(id=>$(id).textContent='–');}$('toggleManual').onclick=()=>{$('manualLocation').classList.toggle('hidden')};
-function reset(mode='now'){level=null;coords=null;wind=null;windLoading=false;setMode(mode);document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));document.querySelectorAll('.odorTile').forEach(x=>x.classList.remove('sel'));selectedOdor='';$('otherOdor').value='';$('otherOdorBox').classList.add('hidden');$('comment').value='';$('latitude').value='';$('longitude').value='';$('manualLocation').classList.add('hidden');const p=dateParts();$('observedDate').value=p.date;$('observedDate').max=p.date;$('observedTime').value=p.time;
+function setMode(mode){timeMode=mode;$('earlierBox').classList.toggle('hidden',mode!=='earlier');$('modeTitle').innerHTML=mode==='earlier'?'<b>🕘 Eerdere waarneming</b>':'<b>＋ Registratie op dit moment</b>';wind=null;$('windState').textContent='Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.';['wSpeed','wDirection','wTemperature','wHumidity','wPressure','wPrecipitation','wCloud'].forEach(id=>$(id).textContent='–');}
+function reset(mode='now'){level=null;coords=null;wind=null;windLoading=false;setMode(mode);document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));document.querySelectorAll('.odorTile').forEach(x=>x.classList.remove('sel'));selectedOdor='';$('otherOdor').value='';$('otherOdorBox').classList.add('hidden');$('comment').value='';$('latitude').value='';$('longitude').value='';const p=dateParts();$('observedDate').value=p.date;$('observedDate').max=p.date;$('observedTime').value=p.time;
 $('mapPickerBox').classList.add('hidden');
 
 if(locationMarker && locationMap){
