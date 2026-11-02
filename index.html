@@ -1,1108 +1,1698 @@
 <!doctype html>
 <html lang="nl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f766e">
-<link rel="manifest" href="manifest.webmanifest">
-<title>GeurMonitor</title>
-<link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">  
-<style>
-:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#17211f;background:#f4f7f6}*{box-sizing:border-box}body{margin:0}header{background:#0f766e;color:#fff;padding:18px;position:sticky;top:0;z-index:2}header h1{margin:0;font-size:22px}.sub,.muted{opacity:.82;font-size:13px}.wrap{max-width:620px;margin:auto;padding:16px 16px 92px}.card{background:#fff;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 3px 16px #0000000d}.hero{text-align:center;padding:26px 16px}.heroIcon{font-size:50px}.btn,.big{width:100%;border:0;border-radius:15px;padding:15px;background:#0f766e;color:#fff;font-weight:800;margin-top:12px}.big{font-size:18px;padding:18px}.secondary{background:#e7f1ef;color:#0f5f59}.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.level{border:2px solid transparent;border-radius:14px;padding:10px 3px;font-size:11px;font-weight:700}.level b{display:block;font-size:22px}.level.sel{border-color:#111}label{display:block;font-weight:700;margin:13px 0 7px}select,textarea,input{width:100%;padding:12px;border:1px solid #ccd6d3;border-radius:12px;font:inherit;background:#fff}textarea{min-height:80px}.hidden{display:none!important}.success{text-align:center;padding:30px 18px}.check{font-size:48px;color:#078052}.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #ddd;display:flex;justify-content:center;z-index:5}.nav button{width:min(33.33%,205px);padding:13px 4px 17px;border:0;background:#fff;color:#61706d}.nav .active{color:#0f766e;font-weight:800}.item{border-left:6px solid #999;background:#f5f8f7;padding:10px;border-radius:10px;margin:8px 0}.sync{font-size:12px;margin-top:5px}.ok{color:#08734f}.warn{color:#9a5b00}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#f4f8f7;border-radius:12px;padding:12px}.stat b{display:block;font-size:22px;color:#0f766e}.notice{font-size:12px}.topline{display:flex;justify-content:space-between;gap:10px}.choice{display:grid;grid-template-columns:1fr 1fr;gap:8px}.choice button{padding:13px;border:2px solid #d4dfdc;border-radius:12px;background:#fff;font-weight:750}.choice button.sel{border-color:#0f766e;background:#e7f1ef;color:#0f5f59}.odorGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.odorTile{min-height:58px;padding:10px;text-align:left;border:2px solid #d4dfdc;border-radius:12px;background:#fff;font-weight:700}.odorTile.sel{border-color:#0f766e;background:#e7f1ef;color:#0f5f59}.odorIcon{font-size:20px;margin-right:5px}.box{background:#f4f8f7;border-radius:12px;padding:12px;margin-top:10px}.fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:end}.fields>div{min-width:0}.fields label{min-height:24px}.fields input{display:block;width:100%;min-width:0;height:50px;margin:0}.homeActions{display:grid;grid-template-columns:1fr;gap:10px;margin-top:16px}.homeActions .big{margin-top:0}
-  .earlierAction{
-  width:auto;
-  justify-self:center;
-  margin-top:2px;
-  padding:9px 14px;
-  border-radius:12px;
-  background:#e7f1ef;
-  color:#0f5f59;
-  border:1px solid #9fc2bc;
-  font-size:13px;
-  font-weight:700;
-}
-.windbox{background:#eef7f5;border-radius:12px;padding:10px;margin-top:8px}.weatherGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.weatherGrid>div{background:#fff;border-radius:10px;padding:9px;font-size:12px}.weatherGrid b{display:block;color:#36534d}.weatherGrid span{display:block;margin-top:3px;font-size:14px;font-weight:700;color:#17211f}.badge{display:inline-block;font-size:11px;padding:3px 7px;border-radius:99px;background:#e7f1ef;color:#0f5f59;margin-left:5px}@media(max-width:400px){.levels{grid-template-columns:repeat(3,1fr)}.fields,.odorGrid,.weatherGrid{grid-template-columns:1fr}}
-body.app-loading > header,
-body.app-loading > main,
-body.app-loading > nav {
-  visibility: hidden;
-}
-.endTimeArea{
-  margin-top:-14px;
-  display:flex;
-  justify-content:flex-end;
-  align-items:baseline;
-}
-
-.endTimeAction,
-.durationInfo{
-  font-size:12px;
-  color:#08734f;
-  line-height:normal;
-  text-align:right;
-  white-space:nowrap;
-}
-
-.endTimeAction{
-  cursor:pointer;
-}
-  .gmModal{
-  position:fixed;
-  inset:0;
-  z-index:1000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:rgba(0,0,0,.35);
-}
-
-.gmModal.hidden{
-  display:none;
-}
-
-.gmModalCard{
-  width:100%;
-  max-width:420px;
-  background:#fff;
-  border-radius:16px;
-  padding:22px;
-  box-shadow:0 10px 35px rgba(0,0,0,.18);
-}
-
-.gmModalCard h2{
-  margin-top:0;
-}
-
-.gmModalDivider{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin:14px 0;
-  color:#777;
-  font-size:12px;
-}
-
-.gmModalDivider::before,
-.gmModalDivider::after{
-  content:"";
-  flex:1;
-  height:1px;
-  background:#ddd;
-}
-  .endTimeInputWrap{
-  display:block;
-  width:100%;
-  max-width:100%;
-  margin:8px 0 14px;
-  padding:0;
-  overflow:hidden;
-  box-sizing:border-box;
-}
-
-#customEndTime,
-#observedDateTime,
-#endDateTime{
-  display:block;
-  width:100%;
-  max-width:100%;
-  min-width:0;
-  height:50px;
-  margin:0;
-  padding:0 12px;
-  border:1px solid #ccd6d3;
-  border-radius:12px;
-  box-sizing:border-box;
-  font:inherit;
-  background:#fff;
-  -webkit-appearance:none;
-  appearance:none;
-}
-#customEndTime::-webkit-date-and-time-value,
-#observedDateTime::-webkit-date-and-time-value,
-#endDateTime::-webkit-date-and-time-value{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:100%;
-  height:100%;
-  min-width:100%;
-  margin:0;
-  padding:0;
-  text-align:center;
-  color:#17211f;
-  -webkit-text-fill-color:#17211f;
-}
-#customEndTime::-webkit-datetime-edit,
-#observedDateTime::-webkit-datetime-edit,
-#endDateTime::-webkit-datetime-edit{
-  display:block;
-  width:100%;
-  text-align:center;
-  color:#17211f;
-  -webkit-text-fill-color:#17211f;
-}
-
-#customEndTime::-webkit-datetime-edit-fields-wrapper,
-#observedDateTime::-webkit-datetime-edit-fields-wrapper,
-#endDateTime::-webkit-datetime-edit-fields-wrapper{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  width:100%;
-  height:100%;
-}
-
-#customEndTime,
-#observedDateTime,
-#endDateTime{
-  color:#17211f;
-  -webkit-text-fill-color:#17211f;
-}
-
-.deleteReportAction{
-  display:block;
-  width:auto;
-  margin:6px 0 0 0;
-  padding:0;
-  border:0;
-  background:transparent;
-  color:#c62828;
-  font-size:18px;
-  line-height:1;
-  cursor:pointer;
-}
-.deleteConfirmBtn{
-  background:#c62828;
-  color:#fff;
-}
-
-.deleteConfirmBtn:hover{
-  background:#a91f1f;
-}  
-.formSection{
-  margin-top:16px;
-  padding:16px;
-  border:1px solid #dce7e4;
-  border-radius:16px;
-  background:#f8fbfa;
-}
-
-.formSection:first-of-type{
-  margin-top:12px;
-}
-
-.formSectionTitle{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin:0 0 12px;
-  color:#0f5f59;
-  font-size:17px;
-  font-weight:800;
-}
-
-.formSectionTitle .sectionNumber{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 26px;
-  width:26px;
-  height:26px;
-  border-radius:50%;
-  background:#0f766e;
-  color:#fff;
-  font-size:13px;
-}
-
-.formSection > label:first-of-type{
-  margin-top:0;
-}
-
-.formActions{
-  margin-top:18px;
-}  
-#mapPickerBox{
-  margin-top:12px;
-}
-
-#locationMap{
-  width:100%;
-  height:320px;
-  border:1px solid #ccd6d3;
-  border-radius:14px;
-  overflow:hidden;
-  background:#e7f1ef;
-}
-
-#mapPickerBox .leaflet-container{
-  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-
-.mapSelectionMarker{
-  background:#0f766e;
-  border:3px solid #fff;
-  border-radius:50%;
-  box-shadow:0 2px 8px rgba(0,0,0,.3);
-}
-</style>
-</head>
-<body class="app-loading">
-<header><h1>🌬️ GeurMonitor</h1><div class="sub">Online geurhinder registreren</div></header>
-<main class="wrap">
- <section id="loginSection" class="card">
-  <h2>Aanmelden</h2>
-  <p class="muted">Meld je aan bij GeurMonitor.</p>
-
-  <label for="loginEmail">E-mailadres</label>
-  <input id="loginEmail" type="email" autocomplete="username">
-
-  <label for="loginPassword">Wachtwoord</label>
-  <input id="loginPassword" type="password" autocomplete="current-password">
-
-  <button id="loginBtn" class="btn" type="button">Aanmelden</button>
-
-  <p id="loginMessage" class="muted"></p>
-</section> 
-
-<section id="home">
-<div class="card hero"><div class="heroIcon">🌬️</div><h2>Geurhinder monitoren</h2><p>Kies hoe je de waarneming wilt registreren.</p><div class="homeActions"><button class="big" id="newNow">＋ Nu waarneming melden</button><button class="big earlierAction" id="newEarlier">🕘 Eerdere waarneming</button></div></div><div class="card notice" id="cloudState">Online database controleren…</div>
-<div id="accountInfo" class="card hidden">
-  <div class="muted">👤 Aangemeld als</div>
-  <b id="accountEmail"></b>
-  <button id="logoutBtn" class="btn secondary" type="button">Uitloggen</button>
-</div>
-</section>
-
- <section id="form" class="hidden"><div class="card"><h2>Nieuwe geurmelding</h2>
-<div id="modeTitle" class="box"><b>Registratie op dit moment</b></div>
-<div id="earlierBox" class="box hidden">
-
-  <div>
-    <label for="observedDateTime">Begin waarneming</label>
-    <input id="observedDateTime" type="datetime-local">
-  </div>
-
-  <div style="margin-top:12px;">
-    <label for="endDateTime">Einde waarneming</label>
-    <input id="endDateTime" type="datetime-local">
-  </div>
-
-  <p class="muted">Eindtijd is optioneel.</p>
-
-</div>
-<div class="formSection">
-  <h3 class="formSectionTitle">
-    <span class="sectionNumber">1</span>
-    Intensiteit
-  </h3>
-
-  <div class="levels" id="levels"></div>
-</div>
-
-<div class="formSection">
-  <h3 class="formSectionTitle">
-    <span class="sectionNumber">2</span>
-    Geurtype
-  </h3>
-
-  <div id="odorGrid" class="odorGrid">
-    <button type="button" class="odorTile" data-odor="Rotte eieren">
-      <span class="odorIcon">🥚</span>Rotte eieren
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Rotte ui / look">
-      <span class="odorIcon">🧅</span>Rotte ui / look
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Rotte kool">
-      <span class="odorIcon">🥬</span>Rotte kool
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Riool / putlucht">
-      <span class="odorIcon">🚽</span>Riool / putlucht
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Mest / gier">
-      <span class="odorIcon">💩</span>Mest / gier
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Compost / rottend groen">
-      <span class="odorIcon">🌿</span>Compost / rottend groen
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Rottend organisch materiaal">
-      <span class="odorIcon">🤢</span>Rottend organisch materiaal
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Ammoniak / urine">
-      <span class="odorIcon">🧪</span>Ammoniak / urine
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Gistend / gegist">
-      <span class="odorIcon">🍺</span>Gistend / gegist
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Zuur / ranzig">
-      <span class="odorIcon">🍋</span>Zuur / ranzig
-    </button>
-
-    <button type="button" class="odorTile" data-odor="Andere geur">
-      <span class="odorIcon">✏️</span>Andere geur
-    </button>
-  </div>
-
-  <div id="otherOdorBox" class="box hidden">
-    <label for="otherOdor">Andere geur</label>
-    <input
-      id="otherOdor"
-      type="text"
-      maxlength="100"
-      placeholder="Beschrijf de geur kort">
-  </div>
-</div>
-
-<div class="formSection">
-  <h3 class="formSectionTitle">
-    <span class="sectionNumber">3</span>
-    Locatie
-  </h3>
-
-  <button class="btn secondary" id="gps" type="button">
-    📍 Huidige locatie gebruiken
-  </button>
-<button class="btn secondary" id="openMapBtn" type="button">
-  🗺️ Locatie op kaart kiezen
-</button>
-
-<div id="mapPickerBox" class="box hidden">
-  <div id="locationMap"></div>
-
-  <p class="muted">
-    Tik op de kaart om de locatie van de geurwaarneming te kiezen.
-</p>
-
-  <button class="btn secondary" id="closeMapBtn" type="button">
-    Kaart sluiten
-  </button>
-</div>
-
-<input id="latitude" type="hidden">
-<input id="longitude" type="hidden">
- 
-  <div class="muted" id="gpsState">
-    Nog geen locatie.
-  </div>
-</div>
-
-<div class="formSection">
-  <h3 class="formSectionTitle">
-    <span class="sectionNumber">4</span>
-    Weergegevens
-  </h3>
-
-  <div class="windbox" id="weatherPanel">
-    <div class="muted" id="windState">
-      Weergegevens worden automatisch opgehaald wanneer tijdstip en
-      locatie beschikbaar zijn.
-    </div>
-
-    <div class="weatherGrid">
-      <div>
-        💨 <b>Windsnelheid</b>
-        <span id="wSpeed">–</span>
-      </div>
-
-      <div>
-        🧭 <b>Windrichting</b>
-        <span id="wDirection">–</span>
-      </div>
-
-      <div>
-        🌡️ <b>Temperatuur</b>
-        <span id="wTemperature">–</span>
-      </div>
-
-      <div>
-        💧 <b>Luchtvochtigheid</b>
-        <span id="wHumidity">–</span>
-      </div>
-
-      <div>
-        📈 <b>Luchtdruk</b>
-        <span id="wPressure">–</span>
-      </div>
-
-      <div>
-        🌧️ <b>Neerslag</b>
-        <span id="wPrecipitation">–</span>
-      </div>
-
-      <div>
-        ☁️ <b>Bewolking</b>
-        <span id="wCloud">–</span>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div class="formSection">
-  <h3 class="formSectionTitle">
-    <span class="sectionNumber">5</span>
-    Opmerking
-  </h3>
-
-  <label for="comment">Aanvullende informatie (optioneel)</label>
-
-  <textarea
-    id="comment"
-    maxlength="500"
-    placeholder="Bijvoorbeeld: sterke geur buiten op het terras"></textarea>
-</div>
-<div class="formActions">
-  <button class="btn" id="save" type="button">
-    Melding opslaan
-  </button>
-
-  <button class="btn secondary" id="cancel" type="button">
-    Annuleren
-  </button>
-</div>
-
-</div>
-</section>
-
-<section id="success" class="hidden"><div class="card success"><div class="check">✓</div><h2>Melding succesvol opgeslagen</h2><p id="successText">De melding staat online.</p><button class="btn" id="backHome">Terug naar hoofdpagina</button></div></section>
-<section id="reports" class="hidden"><div class="card"><div class="topline"><h2>Meldingen</h2><button class="btn secondary" style="width:auto;margin:0;padding:8px 12px" id="sync">Synchroniseren</button></div><div id="list"></div></div></section>
-<section id="dashboard" class="hidden"><div class="card"><h2>Dashboard</h2><div class="stats"><div class="stat"><b id="today">0</b>Vandaag</div><div class="stat"><b id="week">0</b>7 dagen</div><div class="stat"><b id="max">–</b>Hoogste</div><div class="stat"><b id="common">–</b>Meest gemeld</div></div></div></section>
-</main>
-  <div id="endTimeModal" class="gmModal hidden">
-  <div class="gmModalCard">
-    <h2>Eindtijd registreren</h2>
-
-    <p class="muted">
-      Wanneer is de geurhinder gestopt?
-    </p>
-
-    <button id="endNowBtn" class="btn" type="button">
-      ✓ Nu
-    </button>
-
-    <div class="gmModalDivider">
-      <span>of</span>
-    </div>
-
-    <label for="customEndTime">Andere eindtijd</label>
-
-    <div class="endTimeInputWrap">
-      <input id="customEndTime" type="datetime-local">
-    </div>
-
-    <button id="saveEndTimeBtn" class="btn secondary" type="button">
-      Eindtijd opslaan
-    </button>
-
-    <button id="cancelEndTimeBtn" class="btn secondary" type="button">
-      Annuleren
-    </button>
-
-    <p id="endTimeMessage" class="muted"></p>
-  </div>
-</div>
-<div id="deleteModal" class="gmModal hidden">
-  <div class="gmModalCard">
-    <h2>Melding verwijderen</h2>
-
-    <p>
-      Weet je zeker dat je deze melding definitief wilt verwijderen?
-    </p>
-
-    <button id="confirmDeleteBtn" class="btn deleteConfirmBtn" type="button">
-      🗑️ Verwijderen
-    </button>
-
-    <button id="cancelDeleteBtn" class="btn secondary" type="button">
-      Annuleren
-    </button>
-
-    <p id="deleteMessage" class="muted"></p>
-  </div>
-</div>
-<nav class="nav"><button data-page="home" class="active">⌂<br>Home</button><button data-page="reports">☷<br>Meldingen</button><button data-page="dashboard">▥<br>Dashboard</button></nav>
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="config.js"></script><script src="weather-module.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const D=[['Geen','#4caf50'],['Licht','#c9d72e'],['Matig','#f5a623'],['Sterk','#e84a3c'],['Zeer sterk','#7d2b73']];
-let level=null,coords=null,wind=null,db=null,timeMode='now',windLoading=false,selectedOdor='',currentUser=null;
-const NEERVELP_CHURCH={
-  lat:50.820261,
-  lon:4.810700
-};
-
-let locationMap=null;
-let locationMarker=null;
-const $=id=>document.getElementById(id);
-const storageKey=()=>currentUser?`geurmonitor:${currentUser.id}`:'geurmonitor:guest';
-
-const local=()=>{
-  try{
-    return JSON.parse(localStorage.getItem(storageKey())||'[]')
-  }catch{
-    return []
-  }
-};
-
-const saveLocal=a=>localStorage.setItem(storageKey(),JSON.stringify(a));
-function configured(){const c=window.GEURMONITOR_CONFIG||{};return c.supabaseUrl&&!c.supabaseUrl.startsWith('VUL_')&&c.supabaseAnonKey&&!c.supabaseAnonKey.startsWith('VUL_')}
-if(configured()){const c=window.GEURMONITOR_CONFIG;db=supabase.createClient(c.supabaseUrl,c.supabaseAnonKey);$('cloudState').innerHTML='☁️ <b>Online opslag actief</b>. Niet-gesynchroniseerde meldingen blijven lokaal bewaard.'}else{$('cloudState').innerHTML='⚠️ <b>Online opslag niet ingesteld.</b> Voorlopig wordt lokaal opgeslagen.'}
-function updateAuthUI(){
-  const loggedIn=!!currentUser;
-
-  $('loginSection').classList.toggle('hidden',loggedIn);
-
-  if(!loggedIn){
-    document.querySelectorAll('main section').forEach(section=>{
-      if(section.id!=='loginSection'){
-        section.classList.add('hidden');
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0f766e" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <title>GeurMonitor</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <style>
+      :root {
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          sans-serif;
+        color: #17211f;
+        background: #f4f7f6;
       }
-    });
-  }
-
-  const nav=document.querySelector('.nav');
-  if(nav)nav.classList.toggle('hidden',!loggedIn);
-
-  if(loggedIn){
-    $('accountInfo').classList.remove('hidden');
-    $('accountEmail').textContent=currentUser.email;
-  }else{
-    $('accountInfo').classList.add('hidden');
-    $('accountEmail').textContent='';
-  }
-}
-async function checkAuth(){
-  if(!db){
-    updateAuthUI();
-    document.body.classList.remove('app-loading');
-    return;
-  }
-
-  const {data,error}=await db.auth.getSession();
-
-  if(error){
-    console.error("AUTH TEST:",error);
-    currentUser=null;
-    updateAuthUI();
-    document.body.classList.remove('app-loading');
-    return;
-  }
-
-  currentUser=data.session?.user||null;
-
-  console.log(
-    "AUTH TEST:",
-    currentUser ? "ingelogd" : "niet ingelogd",
-    currentUser?.email || ""
-  );
-
-  updateAuthUI();
-
-  if(currentUser){
-    show('home');
-  }
-
-  document.body.classList.remove('app-loading');
-}
-checkAuth();
- async function login(){
-  if(!db)return;
-
-  const email=$('loginEmail').value.trim();
-  const password=$('loginPassword').value;
-
-  if(!email || !password){
-    $('loginMessage').textContent='Vul je e-mailadres en wachtwoord in.';
-    return;
-  }
-
-  $('loginMessage').textContent='Aanmelden...';
-
-  const {data,error}=await db.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-    console.error('LOGIN ERROR:',error);
-    $('loginMessage').textContent='Aanmelden mislukt. Controleer je gegevens.';
-    return;
-  }
-
-  currentUser=data.user;
-  $('loginMessage').textContent='Aangemeld als '+currentUser.email;
-  console.log('LOGIN OK:',currentUser.email);
-  updateAuthUI();
-  show('home');
-}
-
-$('loginBtn').onclick=login;
- 
-$('logoutBtn').onclick=async()=>{
-  if(db){
-    await db.auth.signOut();
-  }
-  currentUser=null;
-  updateAuthUI();
-}; 
-function show(id){document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===id));if(id==='reports'||id==='dashboard')syncAll()}
-document.querySelectorAll('.odorTile').forEach(button=>{button.onclick=()=>{const name=button.dataset.odor;document.querySelectorAll('.odorTile').forEach(tile=>tile.classList.remove('sel'));button.classList.add('sel');if(name==='Andere geur'){selectedOdor='';$('otherOdorBox').classList.remove('hidden');$('otherOdor').focus()}else{selectedOdor=name;$('otherOdor').value='';$('otherOdorBox').classList.add('hidden')}}});
-D.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.className='level';b.style.background=d[1]+'26';b.innerHTML=`<b>${i}</b>${d[0]}`;b.onclick=()=>{level=i;document.querySelectorAll('.level').forEach(x=>x.classList.remove('sel'));b.classList.add('sel')};$('levels').appendChild(b)});
-function pad(n){return String(n).padStart(2,'0')}function dateParts(d=new Date()){return {date:`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,time:`${pad(d.getHours())}:${pad(d.getMinutes())}`}}
-function observedDate(){
-  if(timeMode === 'now'){
-    return new Date();
-  }
-
-  const value = $('observedDateTime').value;
-
-  if(!value){
-    return null;
-  }
-
-  const date = new Date(value);
-
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-function setMode(mode){timeMode=mode;$('earlierBox').classList.toggle('hidden',mode!=='earlier');$('modeTitle').innerHTML=mode==='earlier'?'<b>🕘 Eerdere waarneming</b>':'<b>＋ Registratie op dit moment</b>';wind=null;$('windState').textContent='Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.';['wSpeed','wDirection','wTemperature','wHumidity','wPressure','wPrecipitation','wCloud'].forEach(id=>$(id).textContent='–');}
-function reset(mode='now'){
-  level = null;
-  coords = null;
-  wind = null;
-  windLoading = false;
-
-  setMode(mode);
-
-  document.querySelectorAll('.level').forEach(x =>
-    x.classList.remove('sel')
-  );
-
-  document.querySelectorAll('.odorTile').forEach(x =>
-    x.classList.remove('sel')
-  );
-
-  selectedOdor = '';
-
-  $('otherOdor').value = '';
-  $('otherOdorBox').classList.add('hidden');
-  $('comment').value = '';
-  $('latitude').value = '';
-  $('longitude').value = '';
-
-  const now = new Date();
-  const nowValue = localDateTimeValue(now);
-
-  $('observedDateTime').value = nowValue;
-  $('observedDateTime').max = nowValue;
-
-  $('endDateTime').value = '';
-  $('endDateTime').max = nowValue;
-
-  $('mapPickerBox').classList.add('hidden');
-
-  if(locationMarker && locationMap){
-    locationMap.removeLayer(locationMarker);
-    locationMarker = null;
-  }
-
-  $('gpsState').textContent = 'Nog geen locatie.';
-}
-function initializeLocationMap(){
-  if(locationMap)return;
-
-  locationMap=L.map('locationMap',{
-    zoomControl:true
-  }).setView(
-    [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
-    16
-  );
-
-  L.tileLayer(
-    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    {
-      maxZoom:19,
-      attribution:'&copy; OpenStreetMap contributors'
-    }
-  ).addTo(locationMap);
-  
-  locationMap.on('click',async event=>{
-    const lat=event.latlng.lat;
-    const lon=event.latlng.lng;
-
-    coords={lat,lon};
-
-    $('latitude').value=lat.toFixed(6);
-    $('longitude').value=lon.toFixed(6);
-
-    if(locationMarker){
-      locationMarker.setLatLng(event.latlng);
-    }else{
-      locationMarker=L.marker(event.latlng).addTo(locationMap);
-    }
-
-    $('gpsState').textContent=
-      `✓ Locatie gekozen op kaart: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-
-    wind=null;
-    await updateWind();
-  });
-}
-function locationValues(){if(coords)return coords;const lat=parseFloat($('latitude').value),lon=parseFloat($('longitude').value);return Number.isFinite(lat)&&Number.isFinite(lon)?{lat,lon}:null}
-async function updateWind(){const moment=observedDate(),loc=locationValues();if(!moment||!loc)return null;if(moment>new Date()){$('windState').textContent='Een toekomstig tijdstip is niet toegestaan.';wind=null;return null}windLoading=true;$('windState').textContent='💨 Windgegevens ophalen…';try{wind=await fetchWindForDateTime(loc.lat,loc.lon,moment);const deg=wind.windDirectionDeg==null?'–':Math.round(wind.windDirectionDeg)+'°';$('windState').textContent='✓ Weergegevens opgehaald';$('wSpeed').textContent=`${wind.windSpeedKmh??'–'} km/u`;$('wDirection').textContent=`${wind.windDirectionCompass??'–'} (${deg})`;$('wTemperature').textContent=`${wind.temperatureC??'–'} °C`;$('wHumidity').textContent=`${wind.relativeHumidityPct??'–'} %`;$('wPressure').textContent=`${wind.pressureMslHpa??'–'} hPa`;$('wPrecipitation').textContent=`${wind.precipitationMm??'–'} mm`;$('wCloud').textContent=`${wind.cloudCoverPct??'–'} %`;return wind}catch(error){console.error(error);wind=null;$('windState').textContent='Windgegevens niet beschikbaar. De melding kan toch worden opgeslagen.';return null}finally{windLoading=false}}
-['observedDateTime','latitude','longitude'].forEach(id => {
-  $(id).addEventListener('change', updateWind);
-});
-function earlierEndDate(){
-  if(timeMode !== 'earlier'){
-    return null;
-  }
-
-  const value = $('endDateTime').value;
-
-  if(!value){
-    return null;
-  }
-
-  const date = new Date(value);
-
-  return Number.isNaN(date.getTime()) ? null : date;
-}  
-$('newNow').onclick=()=>{reset('now');show('form')};$('newEarlier').onclick=()=>{reset('earlier');show('form')};$('cancel').onclick=()=>{reset('now');show('home')};$('backHome').onclick=()=>show('home');
-$('gps').onclick=()=>{if(!navigator.geolocation){$('gpsState').textContent='GPS wordt niet ondersteund.';return} $('gps').disabled=true;$('gpsState').textContent='📍 Locatie bepalen…';navigator.geolocation.getCurrentPosition(async p=>{coords={lat:p.coords.latitude,lon:p.coords.longitude};$('latitude').value=coords.lat.toFixed(6);$('longitude').value=coords.lon.toFixed(6);$('gpsState').textContent='✓ Locatie bepaald';$('gps').disabled=false;await updateWind()},()=>{$('gpsState').textContent='Locatie niet beschikbaar. Bij een eerdere melding kun je coördinaten invullen.';$('gps').disabled=false},{enableHighAccuracy:true,timeout:15000,maximumAge:60000})};
-$('openMapBtn').onclick=()=>{
-  $('mapPickerBox').classList.remove('hidden');
-
-  initializeLocationMap();
-
-  // Leaflet moet na het zichtbaar maken de afmetingen opnieuw berekenen.
-  setTimeout(()=>{
-    locationMap.invalidateSize();
-
-    if(coords){
-      locationMap.setView([coords.lat,coords.lon],17);
-
-      if(locationMarker){
-        locationMarker.setLatLng([coords.lat,coords.lon]);
-      }else{
-        locationMarker=L.marker(
-          [coords.lat,coords.lon]
-        ).addTo(locationMap);
+      * {
+        box-sizing: border-box;
       }
-    }else{
-      locationMap.setView(
-        [NEERVELP_CHURCH.lat,NEERVELP_CHURCH.lon],
-        16
-      );
-    }
-  },50);
-};
-
-$('closeMapBtn').onclick=()=>{
-  $('mapPickerBox').classList.add('hidden');
-};
-async function upload(r){if(!db)return false;const row={id:r.id,observed_at:r.ts,ended_at:r.endedAt||null,intensity:r.intensity,intensity_label:r.label,odor_type:r.odor||null,latitude:r.lat,longitude:r.lon,comment:r.comment||null,wind_speed_kmh:r.windSpeedKmh??null,wind_direction_deg:r.windDirectionDeg??null,wind_direction_compass:r.windDirectionCompass??null,weather_observed_at:r.weatherObservedAt||null,weather_source:r.weatherSource||null,temperature_c:r.temperatureC??null,relative_humidity_pct:r.relativeHumidityPct??null,pressure_msl_hpa:r.pressureMslHpa??null,precipitation_mm:r.precipitationMm??null,cloud_cover_pct:r.cloudCoverPct??null,observation_mode:r.observationMode||null,user_id:currentUser?.id||null};const {error}=await db.from('odor_reports').insert(row);if(error)console.error(error);return !error}
-$('save').onclick = async() => {
-  if(level === null){
-    return alert('Kies eerst de intensiteit.');
-  }
-
-  const moment = observedDate();
-
-  if(!moment){
-    return alert('Vul een geldige begindatum en begintijd in.');
-  }
-
-  if(moment > new Date()){
-    return alert('Je kunt geen melding in de toekomst registreren.');
-  }
-
-  const endMoment = earlierEndDate();
-if(endMoment && endMoment < moment){
-  return alert(
-    'De eindtijd kan niet vóór het begin van de waarneming liggen.'
-  );
-}
-
-if(endMoment && (endMoment - moment) > 24 * 60 * 60 * 1000){
-  return alert(
-    'Een waarneming mag maximaal 24 uur duren.'
-  );
-}
-
-if(endMoment && endMoment > new Date()){
-  return alert(
-    'De eindtijd kan niet in de toekomst liggen.'
-  );
-}
-
-  const loc = locationValues();
-
-if(windLoading){
-  return alert('De windgegevens worden nog opgehaald.');
-}
-
-if(loc && !wind){
-  await updateWind();
-}
-
-  const odorValue =
-    selectedOdor || $('otherOdor').value.trim();
-
-  const r = {
-    id: crypto.randomUUID(),
-    userId: currentUser?.id || null,
-    ts: moment.toISOString(),
-    intensity: level,
-    label: D[level][0],
-    odor: odorValue,
-    lat: loc?.lat ?? null,
-    lon: loc?.lon ?? null,
-    comment: $('comment').value.trim(),
-    windSpeedKmh: wind?.windSpeedKmh ?? null,
-    windDirectionDeg: wind?.windDirectionDeg ?? null,
-    windDirectionCompass: wind?.windDirectionCompass ?? null,
-    weatherObservedAt: wind?.weatherObservedAt ?? null,
-    weatherSource: wind?.weatherSource ?? null,
-    temperatureC: wind?.temperatureC ?? null,
-    relativeHumidityPct: wind?.relativeHumidityPct ?? null,
-    pressureMslHpa: wind?.pressureMslHpa ?? null,
-    precipitationMm: wind?.precipitationMm ?? null,
-    cloudCoverPct: wind?.cloudCoverPct ?? null,
-    observationMode: timeMode,
-    createdAt: new Date().toISOString(),
-    endedAt: endMoment ? endMoment.toISOString() : null,
-    synced: false
-  };
-
-  const reports = local();
-  reports.unshift(r);
-  saveLocal(reports);
-
-  const ok = await upload(r);
-
-  if(ok){
-    r.synced = true;
-    saveLocal(reports);
-  }
-
-  $('successText').textContent = ok
-    ? 'De melding is online opgeslagen.'
-    : 'De melding is lokaal bewaard en wordt later gesynchroniseerd.';
-
-  reset();
-  show('success');
-};
-async function syncAll(){
-  let a=local();
-
-  if(db){
-    // Probeer eerst alle nog niet gesynchroniseerde lokale meldingen te uploaden.
-    for(const r of a){
-      if(!r.synced){
-        r.synced=await upload(r);
+      body {
+        margin: 0;
       }
-    }
-
-    // Bewaar voorlopig de uploadresultaten lokaal.
-    saveLocal(a);
-
-    const {data,error}=await db
-      .from('odor_reports')
-      .select('*')
-      .order('observed_at',{ascending:false});
-
-    if(!error && data){
-
-      // Alleen meldingen waarvan upload NIET gelukt is,
-      // mogen lokaal blijven zonder in Supabase aanwezig te zijn.
-      const unsyncedLocal=a.filter(r=>!r.synced);
-
-      // Supabase is de bron voor alle gesynchroniseerde meldingen.
-      const serverReports=data.map(x=>({
-        id:x.id,
-        userId:x.user_id,
-        ts:x.observed_at,
-        intensity:x.intensity,
-        label:x.intensity_label,
-        odor:x.odor_type,
-        lat:x.latitude,
-        lon:x.longitude,
-        comment:x.comment,
-        windSpeedKmh:x.wind_speed_kmh,
-        windDirectionDeg:x.wind_direction_deg,
-        windDirectionCompass:x.wind_direction_compass,
-        weatherObservedAt:x.weather_observed_at,
-        weatherSource:x.weather_source,
-        temperatureC:x.temperature_c,
-        relativeHumidityPct:x.relative_humidity_pct,
-        pressureMslHpa:x.pressure_msl_hpa,
-        precipitationMm:x.precipitation_mm,
-        cloudCoverPct:x.cloud_cover_pct,
-        observationMode:x.observation_mode||null,
-        endedAt:x.ended_at||null,
-        createdAt:x.created_at||null,
-        synced:true
-      }));
-
-      // Serverrecords + eventueel nog niet geüploade lokale records.
-      const map=new Map();
-
-      serverReports.forEach(r=>map.set(r.id,r));
-      unsyncedLocal.forEach(r=>{
-        if(!map.has(r.id)){
-          map.set(r.id,r);
+      header {
+        background: #0f766e;
+        color: #fff;
+        padding: 18px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .sub,
+      .muted {
+        opacity: 0.82;
+        font-size: 13px;
+      }
+      .wrap {
+        max-width: 620px;
+        margin: auto;
+        padding: 16px 16px 92px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 16px;
+        margin-bottom: 14px;
+        box-shadow: 0 3px 16px #0000000d;
+      }
+      .hero {
+        text-align: center;
+        padding: 26px 16px;
+      }
+      .heroIcon {
+        font-size: 50px;
+      }
+      .btn,
+      .big {
+        width: 100%;
+        border: 0;
+        border-radius: 15px;
+        padding: 15px;
+        background: #0f766e;
+        color: #fff;
+        font-weight: 800;
+        margin-top: 12px;
+      }
+      .big {
+        font-size: 18px;
+        padding: 18px;
+      }
+      .secondary {
+        background: #e7f1ef;
+        color: #0f5f59;
+      }
+      .levels {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+      }
+      .level {
+        border: 2px solid transparent;
+        border-radius: 14px;
+        padding: 10px 3px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .level b {
+        display: block;
+        font-size: 22px;
+      }
+      .level.sel {
+        border-color: #111;
+      }
+      label {
+        display: block;
+        font-weight: 700;
+        margin: 13px 0 7px;
+      }
+      select,
+      textarea,
+      input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ccd6d3;
+        border-radius: 12px;
+        font: inherit;
+        background: #fff;
+      }
+      textarea {
+        min-height: 80px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .success {
+        text-align: center;
+        padding: 30px 18px;
+      }
+      .check {
+        font-size: 48px;
+        color: #078052;
+      }
+      .nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-top: 1px solid #ddd;
+        display: flex;
+        justify-content: center;
+        z-index: 5;
+      }
+      .nav button {
+        width: min(33.33%, 205px);
+        padding: 13px 4px 17px;
+        border: 0;
+        background: #fff;
+        color: #61706d;
+      }
+      .nav .active {
+        color: #0f766e;
+        font-weight: 800;
+      }
+      .item {
+        border-left: 6px solid #999;
+        background: #f5f8f7;
+        padding: 10px;
+        border-radius: 10px;
+        margin: 8px 0;
+      }
+      .sync {
+        font-size: 12px;
+        margin-top: 5px;
+      }
+      .ok {
+        color: #08734f;
+      }
+      .warn {
+        color: #9a5b00;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .stat {
+        background: #f4f8f7;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .stat b {
+        display: block;
+        font-size: 22px;
+        color: #0f766e;
+      }
+      .notice {
+        font-size: 12px;
+      }
+      .topline {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .choice {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .choice button {
+        padding: 13px;
+        border: 2px solid #d4dfdc;
+        border-radius: 12px;
+        background: #fff;
+        font-weight: 750;
+      }
+      .choice button.sel {
+        border-color: #0f766e;
+        background: #e7f1ef;
+        color: #0f5f59;
+      }
+      .odorGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .odorTile {
+        min-height: 58px;
+        padding: 10px;
+        text-align: left;
+        border: 2px solid #d4dfdc;
+        border-radius: 12px;
+        background: #fff;
+        font-weight: 700;
+      }
+      .odorTile.sel {
+        border-color: #0f766e;
+        background: #e7f1ef;
+        color: #0f5f59;
+      }
+      .odorIcon {
+        font-size: 20px;
+        margin-right: 5px;
+      }
+      .box {
+        background: #f4f8f7;
+        border-radius: 12px;
+        padding: 12px;
+        margin-top: 10px;
+      }
+      .fields {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 14px;
+        align-items: end;
+      }
+      .fields > div {
+        min-width: 0;
+      }
+      .fields label {
+        min-height: 24px;
+      }
+      .fields input {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        height: 50px;
+        margin: 0;
+      }
+      .homeActions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .homeActions .big {
+        margin-top: 0;
+      }
+      .earlierAction {
+        width: auto;
+        justify-self: center;
+        margin-top: 2px;
+        padding: 9px 14px;
+        border-radius: 12px;
+        background: #e7f1ef;
+        color: #0f5f59;
+        border: 1px solid #9fc2bc;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .windbox {
+        background: #eef7f5;
+        border-radius: 12px;
+        padding: 10px;
+        margin-top: 8px;
+      }
+      .weatherGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .weatherGrid > div {
+        background: #fff;
+        border-radius: 10px;
+        padding: 9px;
+        font-size: 12px;
+      }
+      .weatherGrid b {
+        display: block;
+        color: #36534d;
+      }
+      .weatherGrid span {
+        display: block;
+        margin-top: 3px;
+        font-size: 14px;
+        font-weight: 700;
+        color: #17211f;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 11px;
+        padding: 3px 7px;
+        border-radius: 99px;
+        background: #e7f1ef;
+        color: #0f5f59;
+        margin-left: 5px;
+      }
+      @media (max-width: 400px) {
+        .levels {
+          grid-template-columns: repeat(3, 1fr);
         }
+        .fields,
+        .odorGrid,
+        .weatherGrid {
+          grid-template-columns: 1fr;
+        }
+      }
+      body.app-loading > header,
+      body.app-loading > main,
+      body.app-loading > nav {
+        visibility: hidden;
+      }
+      .endTimeArea {
+        margin-top: -14px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: baseline;
+      }
+
+      .endTimeAction,
+      .durationInfo {
+        font-size: 12px;
+        color: #08734f;
+        line-height: normal;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .endTimeAction {
+        cursor: pointer;
+      }
+      .gmModal {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.35);
+      }
+
+      .gmModal.hidden {
+        display: none;
+      }
+
+      .gmModalCard {
+        width: 100%;
+        max-width: 420px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 22px;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.18);
+      }
+
+      .gmModalCard h2 {
+        margin-top: 0;
+      }
+
+      .gmModalDivider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 14px 0;
+        color: #777;
+        font-size: 12px;
+      }
+
+      .gmModalDivider::before,
+      .gmModalDivider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #ddd;
+      }
+      .endTimeInputWrap {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        margin: 8px 0 14px;
+        padding: 0;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+
+      #customEndTime,
+      #observedDateTime,
+      #endDateTime {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        height: 50px;
+        margin: 0;
+        padding: 0 12px;
+        border: 1px solid #ccd6d3;
+        border-radius: 12px;
+        box-sizing: border-box;
+        font: inherit;
+        background: #fff;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      #customEndTime::-webkit-date-and-time-value,
+      #observedDateTime::-webkit-date-and-time-value,
+      #endDateTime::-webkit-date-and-time-value {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        min-width: 100%;
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        color: #17211f;
+        -webkit-text-fill-color: #17211f;
+      }
+      #customEndTime::-webkit-datetime-edit,
+      #observedDateTime::-webkit-datetime-edit,
+      #endDateTime::-webkit-datetime-edit {
+        display: block;
+        width: 100%;
+        text-align: center;
+        color: #17211f;
+        -webkit-text-fill-color: #17211f;
+      }
+
+      #customEndTime::-webkit-datetime-edit-fields-wrapper,
+      #observedDateTime::-webkit-datetime-edit-fields-wrapper,
+      #endDateTime::-webkit-datetime-edit-fields-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      #customEndTime,
+      #observedDateTime,
+      #endDateTime {
+        color: #17211f;
+        -webkit-text-fill-color: #17211f;
+      }
+
+      .deleteReportAction {
+        display: block;
+        width: auto;
+        margin: 6px 0 0 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #c62828;
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .deleteConfirmBtn {
+        background: #c62828;
+        color: #fff;
+      }
+
+      .deleteConfirmBtn:hover {
+        background: #a91f1f;
+      }
+      .formSection {
+        margin-top: 16px;
+        padding: 16px;
+        border: 1px solid #dce7e4;
+        border-radius: 16px;
+        background: #f8fbfa;
+      }
+
+      .formSection:first-of-type {
+        margin-top: 12px;
+      }
+
+      .formSectionTitle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 12px;
+        color: #0f5f59;
+        font-size: 17px;
+        font-weight: 800;
+      }
+
+      .formSectionTitle .sectionNumber {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 26px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #0f766e;
+        color: #fff;
+        font-size: 13px;
+      }
+
+      .formSection > label:first-of-type {
+        margin-top: 0;
+      }
+
+      .formActions {
+        margin-top: 18px;
+      }
+      #mapPickerBox {
+        margin-top: 12px;
+      }
+
+      #locationMap {
+        width: 100%;
+        height: 320px;
+        border: 1px solid #ccd6d3;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #e7f1ef;
+      }
+
+      #mapPickerBox .leaflet-container {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+
+      .mapSelectionMarker {
+        background: #0f766e;
+        border: 3px solid #fff;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body class="app-loading">
+    <header>
+      <h1>🌬️ GeurMonitor</h1>
+      <div class="sub">Online geurhinder registreren</div>
+    </header>
+    <main class="wrap">
+      <section id="loginSection" class="card">
+        <h2>Aanmelden</h2>
+        <p class="muted">Meld je aan bij GeurMonitor.</p>
+
+        <label for="loginEmail">E-mailadres</label>
+        <input id="loginEmail" type="email" autocomplete="username" />
+
+        <label for="loginPassword">Wachtwoord</label>
+        <input
+          id="loginPassword"
+          type="password"
+          autocomplete="current-password"
+        />
+
+        <button id="loginBtn" class="btn" type="button">Aanmelden</button>
+
+        <p id="loginMessage" class="muted"></p>
+      </section>
+
+      <section id="home">
+        <div class="card hero">
+          <div class="heroIcon">🌬️</div>
+          <h2>Geurhinder monitoren</h2>
+          <p>Kies hoe je de waarneming wilt registreren.</p>
+          <div class="homeActions">
+            <button class="big" id="newNow">＋ Nu waarneming melden</button
+            ><button class="big earlierAction" id="newEarlier">
+              🕘 Eerdere waarneming
+            </button>
+          </div>
+        </div>
+        <div class="card notice" id="cloudState">
+          Online database controleren…
+        </div>
+        <div id="accountInfo" class="card hidden">
+          <div class="muted">👤 Aangemeld als</div>
+          <b id="accountEmail"></b>
+          <button id="logoutBtn" class="btn secondary" type="button">
+            Uitloggen
+          </button>
+        </div>
+      </section>
+
+      <section id="form" class="hidden">
+        <div class="card">
+          <h2>Nieuwe geurmelding</h2>
+          <div id="modeTitle" class="box"><b>Registratie op dit moment</b></div>
+          <div id="earlierBox" class="box hidden">
+            <div>
+              <label for="observedDateTime">Begin waarneming</label>
+              <input id="observedDateTime" type="datetime-local" />
+            </div>
+
+            <div style="margin-top: 12px">
+              <label for="endDateTime">Einde waarneming</label>
+              <input id="endDateTime" type="datetime-local" />
+            </div>
+
+            <p class="muted">Eindtijd is optioneel.</p>
+          </div>
+          <div class="formSection">
+            <h3 class="formSectionTitle">
+              <span class="sectionNumber">1</span>
+              Intensiteit
+            </h3>
+
+            <div class="levels" id="levels"></div>
+          </div>
+
+          <div class="formSection">
+            <h3 class="formSectionTitle">
+              <span class="sectionNumber">2</span>
+              Geurtype
+            </h3>
+
+            <div id="odorGrid" class="odorGrid">
+              <button type="button" class="odorTile" data-odor="Rotte eieren">
+                <span class="odorIcon">🥚</span>Rotte eieren
+              </button>
+
+              <button
+                type="button"
+                class="odorTile"
+                data-odor="Rotte ui / look"
+              >
+                <span class="odorIcon">🧅</span>Rotte ui / look
+              </button>
+
+              <button type="button" class="odorTile" data-odor="Rotte kool">
+                <span class="odorIcon">🥬</span>Rotte kool
+              </button>
+
+              <button
+                type="button"
+                class="odorTile"
+                data-odor="Riool / putlucht"
+              >
+                <span class="odorIcon">🚽</span>Riool / putlucht
+              </button>
+
+              <button type="button" class="odorTile" data-odor="Mest / gier">
+                <span class="odorIcon">💩</span>Mest / gier
+              </button>
+
+              <button
+                type="button"
+                class="odorTile"
+                data-odor="Compost / rottend groen"
+              >
+                <span class="odorIcon">🌿</span>Compost / rottend groen
+              </button>
+
+              <button
+                type="button"
+                class="odorTile"
+                data-odor="Rottend organisch materiaal"
+              >
+                <span class="odorIcon">🤢</span>Rottend organisch materiaal
+              </button>
+
+              <button
+                type="button"
+                class="odorTile"
+                data-odor="Ammoniak / urine"
+              >
+                <span class="odorIcon">🧪</span>Ammoniak / urine
+              </button>
+
+              <button
+                type="button"
+                class="odorTile"
+                data-odor="Gistend / gegist"
+              >
+                <span class="odorIcon">🍺</span>Gistend / gegist
+              </button>
+
+              <button type="button" class="odorTile" data-odor="Zuur / ranzig">
+                <span class="odorIcon">🍋</span>Zuur / ranzig
+              </button>
+
+              <button type="button" class="odorTile" data-odor="Andere geur">
+                <span class="odorIcon">✏️</span>Andere geur
+              </button>
+            </div>
+
+            <div id="otherOdorBox" class="box hidden">
+              <label for="otherOdor">Andere geur</label>
+              <input
+                id="otherOdor"
+                type="text"
+                maxlength="100"
+                placeholder="Beschrijf de geur kort"
+              />
+            </div>
+          </div>
+
+          <div class="formSection">
+            <h3 class="formSectionTitle">
+              <span class="sectionNumber">3</span>
+              Locatie
+            </h3>
+
+            <button class="btn secondary" id="gps" type="button">
+              📍 Huidige locatie gebruiken
+            </button>
+            <button class="btn secondary" id="openMapBtn" type="button">
+              🗺️ Locatie op kaart kiezen
+            </button>
+
+            <div id="mapPickerBox" class="box hidden">
+              <div id="locationMap"></div>
+
+              <p class="muted">
+                Tik op de kaart om de locatie van de geurwaarneming te kiezen.
+              </p>
+
+              <button class="btn secondary" id="closeMapBtn" type="button">
+                Kaart sluiten
+              </button>
+            </div>
+
+            <input id="latitude" type="hidden" />
+            <input id="longitude" type="hidden" />
+
+            <div class="muted" id="gpsState">Nog geen locatie.</div>
+          </div>
+
+          <div class="formSection">
+            <h3 class="formSectionTitle">
+              <span class="sectionNumber">4</span>
+              Weergegevens
+            </h3>
+
+            <div class="windbox" id="weatherPanel">
+              <div class="muted" id="windState">
+                Weergegevens worden automatisch opgehaald wanneer tijdstip en
+                locatie beschikbaar zijn.
+              </div>
+
+              <div class="weatherGrid">
+                <div>
+                  💨 <b>Windsnelheid</b>
+                  <span id="wSpeed">–</span>
+                </div>
+
+                <div>
+                  🧭 <b>Windrichting</b>
+                  <span id="wDirection">–</span>
+                </div>
+
+                <div>
+                  🌡️ <b>Temperatuur</b>
+                  <span id="wTemperature">–</span>
+                </div>
+
+                <div>
+                  💧 <b>Luchtvochtigheid</b>
+                  <span id="wHumidity">–</span>
+                </div>
+
+                <div>
+                  📈 <b>Luchtdruk</b>
+                  <span id="wPressure">–</span>
+                </div>
+
+                <div>
+                  🌧️ <b>Neerslag</b>
+                  <span id="wPrecipitation">–</span>
+                </div>
+
+                <div>
+                  ☁️ <b>Bewolking</b>
+                  <span id="wCloud">–</span>
+                </div>
+              </div>    
+            </div>
+          </div>
+
+          <div class="formSection">
+            <h3 class="formSectionTitle">
+              <span class="sectionNumber">5</span>
+              Opmerking
+            </h3>
+
+            <label for="comment">Aanvullende informatie (optioneel)</label>
+
+            <textarea
+              id="comment"
+              maxlength="500"
+              placeholder="Bijvoorbeeld: sterke geur buiten op het terras"
+            ></textarea>
+          </div>
+          <div class="formActions">
+            <button class="btn" id="save" type="button">Melding opslaan</button>
+
+            <button class="btn secondary" id="cancel" type="button">
+              Annuleren
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="success" class="hidden">
+        <div class="card success">
+          <div class="check">✓</div>
+          <h2>Melding succesvol opgeslagen</h2>
+          <p id="successText">De melding staat online.</p>
+          <button class="btn" id="backHome">Terug naar hoofdpagina</button>
+        </div>
+      </section>
+      <section id="reports" class="hidden">
+        <div class="card">
+          <div class="topline">
+            <h2>Meldingen</h2>
+            <button
+              class="btn secondary"
+              style="width: auto; margin: 0; padding: 8px 12px"
+              id="sync"
+            >
+              Synchroniseren
+            </button>
+          </div>
+          <div id="list"></div>
+        </div>
+      </section>
+      <section id="dashboard" class="hidden">
+        <div class="card">
+          <h2>Dashboard</h2>
+          <div class="stats">
+            <div class="stat"><b id="today">0</b>Vandaag</div>
+            <div class="stat"><b id="week">0</b>7 dagen</div>
+            <div class="stat"><b id="max">–</b>Hoogste</div>
+            <div class="stat"><b id="common">–</b>Meest gemeld</div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <div id="endTimeModal" class="gmModal hidden">
+      <div class="gmModalCard">
+        <h2>Eindtijd registreren</h2>
+
+        <p class="muted">Wanneer is de geurhinder gestopt?</p>
+
+        <button id="endNowBtn" class="btn" type="button">✓ Nu</button>
+
+        <div class="gmModalDivider">
+          <span>of</span>
+        </div>
+
+        <label for="customEndTime">Andere eindtijd</label>
+
+        <div class="endTimeInputWrap">
+          <input id="customEndTime" type="datetime-local" />
+        </div>
+
+        <button id="saveEndTimeBtn" class="btn secondary" type="button">
+          Eindtijd opslaan
+        </button>
+
+        <button id="cancelEndTimeBtn" class="btn secondary" type="button">
+          Annuleren
+        </button>
+
+        <p id="endTimeMessage" class="muted"></p>
+      </div>
+    </div>
+    <div id="deleteModal" class="gmModal hidden">
+      <div class="gmModalCard">
+        <h2>Melding verwijderen</h2>
+
+        <p>Weet je zeker dat je deze melding definitief wilt verwijderen?</p>
+
+        <button
+          id="confirmDeleteBtn"
+          class="btn deleteConfirmBtn"
+          type="button"
+        >
+          🗑️ Verwijderen
+        </button>
+
+        <button id="cancelDeleteBtn" class="btn secondary" type="button">
+          Annuleren
+        </button>
+
+        <p id="deleteMessage" class="muted"></p>
+      </div>
+    </div>
+    <nav class="nav">
+      <button data-page="home" class="active">⌂<br />Home</button
+      ><button data-page="reports">☷<br />Meldingen</button
+      ><button data-page="dashboard">▥<br />Dashboard</button>
+    </nav>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="config.js"></script>
+    <script src="weather-module.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const D = [
+        ["Geen", "#4caf50"],
+        ["Licht", "#c9d72e"],
+        ["Matig", "#f5a623"],
+        ["Sterk", "#e84a3c"],
+        ["Zeer sterk", "#7d2b73"],
+      ];
+      let level = null,
+        coords = null,
+        wind = null,
+        db = null,
+        timeMode = "now",
+        windLoading = false,
+        selectedOdor = "",
+        currentUser = null;
+      const NEERVELP_CHURCH = {
+        lat: 50.820261,
+        lon: 4.8107,
+      };
+
+      let locationMap = null;
+      let locationMarker = null;
+      const $ = (id) => document.getElementById(id);
+      const storageKey = () =>
+        currentUser ? `geurmonitor:${currentUser.id}` : "geurmonitor:guest";
+
+      const local = () => {
+        try {
+          return JSON.parse(localStorage.getItem(storageKey()) || "[]");
+        } catch {
+          return [];
+        }
+      };
+
+      const saveLocal = (a) =>
+        localStorage.setItem(storageKey(), JSON.stringify(a));
+      function configured() {
+        const c = window.GEURMONITOR_CONFIG || {};
+        return (
+          c.supabaseUrl &&
+          !c.supabaseUrl.startsWith("VUL_") &&
+          c.supabaseAnonKey &&
+          !c.supabaseAnonKey.startsWith("VUL_")
+        );
+      }
+      if (configured()) {
+        const c = window.GEURMONITOR_CONFIG;
+        db = supabase.createClient(c.supabaseUrl, c.supabaseAnonKey);
+        $("cloudState").innerHTML =
+          "☁️ <b>Online opslag actief</b>. Niet-gesynchroniseerde meldingen blijven lokaal bewaard.";
+      } else {
+        $("cloudState").innerHTML =
+          "⚠️ <b>Online opslag niet ingesteld.</b> Voorlopig wordt lokaal opgeslagen.";
+      }
+      function updateAuthUI() {
+        const loggedIn = !!currentUser;
+
+        $("loginSection").classList.toggle("hidden", loggedIn);
+
+        if (!loggedIn) {
+          document.querySelectorAll("main section").forEach((section) => {
+            if (section.id !== "loginSection") {
+              section.classList.add("hidden");
+            }
+          });
+        }
+
+        const nav = document.querySelector(".nav");
+        if (nav) nav.classList.toggle("hidden", !loggedIn);
+
+        if (loggedIn) {
+          $("accountInfo").classList.remove("hidden");
+          $("accountEmail").textContent = currentUser.email;
+        } else {
+          $("accountInfo").classList.add("hidden");
+          $("accountEmail").textContent = "";
+        }
+      }
+      async function checkAuth() {
+        if (!db) {
+          updateAuthUI();
+          document.body.classList.remove("app-loading");
+          return;
+        }
+
+        const { data, error } = await db.auth.getSession();
+
+        if (error) {
+          console.error("AUTH TEST:", error);
+          currentUser = null;
+          updateAuthUI();
+          document.body.classList.remove("app-loading");
+          return;
+        }
+
+        currentUser = data.session?.user || null;
+
+        console.log(
+          "AUTH TEST:",
+          currentUser ? "ingelogd" : "niet ingelogd",
+          currentUser?.email || "",
+        );
+
+        updateAuthUI();
+
+        if (currentUser) {
+          show("home");
+        }
+
+        document.body.classList.remove("app-loading");
+      }
+      checkAuth();
+      async function login() {
+        if (!db) return;
+
+        const email = $("loginEmail").value.trim();
+        const password = $("loginPassword").value;
+
+        if (!email || !password) {
+          $("loginMessage").textContent =
+            "Vul je e-mailadres en wachtwoord in.";
+          return;
+        }
+
+        $("loginMessage").textContent = "Aanmelden...";
+
+        const { data, error } = await db.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          console.error("LOGIN ERROR:", error);
+          $("loginMessage").textContent =
+            "Aanmelden mislukt. Controleer je gegevens.";
+          return;
+        }
+
+        currentUser = data.user;
+        $("loginMessage").textContent = "Aangemeld als " + currentUser.email;
+        console.log("LOGIN OK:", currentUser.email);
+        updateAuthUI();
+        show("home");
+      }
+
+      $("loginBtn").onclick = login;
+
+      $("logoutBtn").onclick = async () => {
+        if (db) {
+          await db.auth.signOut();
+        }
+        currentUser = null;
+        updateAuthUI();
+      };
+      function show(id) {
+        document
+          .querySelectorAll("main section")
+          .forEach((s) => s.classList.add("hidden"));
+        $(id).classList.remove("hidden");
+        document
+          .querySelectorAll(".nav button")
+          .forEach((b) => b.classList.toggle("active", b.dataset.page === id));
+        if (id === "reports" || id === "dashboard") syncAll();
+      }
+      document.querySelectorAll(".odorTile").forEach((button) => {
+        button.onclick = () => {
+          const name = button.dataset.odor;
+          document
+            .querySelectorAll(".odorTile")
+            .forEach((tile) => tile.classList.remove("sel"));
+          button.classList.add("sel");
+          if (name === "Andere geur") {
+            selectedOdor = "";
+            $("otherOdorBox").classList.remove("hidden");
+            $("otherOdor").focus();
+          } else {
+            selectedOdor = name;
+            $("otherOdor").value = "";
+            $("otherOdorBox").classList.add("hidden");
+          }
+        };
       });
+      D.forEach((d, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "level";
+        b.style.background = d[1] + "26";
+        b.innerHTML = `<b>${i}</b>${d[0]}`;
+        b.onclick = () => {
+          level = i;
+          document
+            .querySelectorAll(".level")
+            .forEach((x) => x.classList.remove("sel"));
+          b.classList.add("sel");
+        };
+        $("levels").appendChild(b);
+      });
+      function pad(n) {
+        return String(n).padStart(2, "0");
+      }
+      function dateParts(d = new Date()) {
+        return {
+          date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+          time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+        };
+      }
+      function observedDate() {
+        if (timeMode === "now") {
+          return new Date();
+        }
 
-      a=[...map.values()].sort(
-        (x,y)=>new Date(y.ts)-new Date(x.ts)
-      );
+        const value = $("observedDateTime").value;
 
-      saveLocal(a);
-    }else if(error){
-      console.error('SYNC SELECT ERROR:',error);
-    }
-  }
+        if (!value) {
+          return null;
+        }
 
-  render(a);
-}
-function formatDuration(startValue,endValue){
-  const start=new Date(startValue);
-  const end=new Date(endValue);
-  const diff=Math.max(0,end-start);
+        const date = new Date(value);
 
-  const totalMinutes=Math.floor(diff/60000);
-  const hours=Math.floor(totalMinutes/60);
-  const minutes=totalMinutes%60;
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+      function setMode(mode) {
+        timeMode = mode;
+        $("earlierBox").classList.toggle("hidden", mode !== "earlier");
+        $("modeTitle").innerHTML =
+          mode === "earlier"
+            ? "<b>🕘 Eerdere waarneming</b>"
+            : "<b>＋ Registratie op dit moment</b>";
+        wind = null;
+        $("windState").textContent =
+          "Weergegevens worden automatisch opgehaald wanneer tijdstip en locatie beschikbaar zijn.";
+        [
+          "wSpeed",
+          "wDirection",
+          "wTemperature",
+          "wHumidity",
+          "wPressure",
+          "wPrecipitation",
+          "wCloud",
+        ].forEach((id) => ($(id).textContent = "–"));
+      }
+      function reset(mode = "now") {
+        level = null;
+        coords = null;
+        wind = null;
+        windLoading = false;
 
-  if(hours>0){
-    return `${hours} u ${minutes} min`;
-  }
+        setMode(mode);
 
-  return `${minutes} min`;
-}
+        document
+          .querySelectorAll(".level")
+          .forEach((x) => x.classList.remove("sel"));
 
-function remainingEndTime(observedAt){
-  const observed=new Date(observedAt).getTime();
+        document
+          .querySelectorAll(".odorTile")
+          .forEach((x) => x.classList.remove("sel"));
 
-  if(Number.isNaN(observed))return null;
+        selectedOdor = "";
 
-  const deadline=observed+(24*60*60*1000);
-  const remaining=deadline-Date.now();
+        $("otherOdor").value = "";
+        $("otherOdorBox").classList.add("hidden");
+        $("comment").value = "";
+        $("latitude").value = "";
+        $("longitude").value = "";
 
-  if(remaining<=0)return null;
+        const now = new Date();
+        const nowValue = localDateTimeValue(now);
 
-  const totalMinutes=Math.ceil(remaining/60000);
-  const hours=Math.floor(totalMinutes/60);
-  const minutes=totalMinutes%60;
+        $("observedDateTime").value = nowValue;
+        $("observedDateTime").max = nowValue;
 
-  if(hours>0){
-    return `${hours} u ${minutes} min`;
-  }
+        $("endDateTime").value = "";
+        $("endDateTime").max = nowValue;
 
-  return `${minutes} min`;
-}
+        $("mapPickerBox").classList.add("hidden");
 
-function canDeleteReport(createdAt){
-  if(!createdAt)return false;
+        if (locationMarker && locationMap) {
+          locationMap.removeLayer(locationMarker);
+          locationMarker = null;
+        }
 
-  const created=new Date(createdAt).getTime();
-  const now=Date.now();
+        $("gpsState").textContent = "Nog geen locatie.";
+      }
+      function initializeLocationMap() {
+        if (locationMap) return;
 
-  return now-created < 12*60*60*1000 && now>=created;
-}
-  
-function localDateTimeValue(date=new Date()){
-  const pad=n=>String(n).padStart(2,'0');
+        locationMap = L.map("locationMap", {
+          zoomControl: true,
+        }).setView([NEERVELP_CHURCH.lat, NEERVELP_CHURCH.lon], 16);
 
-  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}`+
-         `T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-function esc(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function render(a=local()){
-  const l=$('list');
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(locationMap);
 
-  l.innerHTML=a.length?'':'<p class="muted">Nog geen meldingen.</p>';
+        locationMap.on("click", async (event) => {
+          const lat = event.latlng.lat;
+          const lon = event.latlng.lng;
 
-  a.forEach(r=>{
-    const e=document.createElement('div');
-    e.className='item';
-    e.style.borderColor=D[r.intensity]?.[1]||'#999';
+          coords = { lat, lon };
 
-    const wh=r.windSpeedKmh!=null
-      ? `<div class="muted">💨 ${esc(r.windSpeedKmh)} km/u · ${esc(r.windDirectionCompass||'–')}${r.windDirectionDeg!=null?' ('+Math.round(r.windDirectionDeg)+'°)':''}</div>`
-      : '';
+          $("latitude").value = lat.toFixed(6);
+          $("longitude").value = lon.toFixed(6);
 
-    const env=(r.temperatureC!=null||
-               r.relativeHumidityPct!=null||
-               r.pressureMslHpa!=null||
-               r.precipitationMm!=null||
-               r.cloudCoverPct!=null)
-      ? `<div class="muted">🌡️ ${esc(r.temperatureC??'–')} °C · 💧 ${esc(r.relativeHumidityPct??'–')}% · 🧭 ${esc(r.pressureMslHpa??'–')} hPa · 🌧️ ${esc(r.precipitationMm??'–')} mm · ☁️ ${esc(r.cloudCoverPct??'–')}%</div>`
-      : '';
+          if (locationMarker) {
+            locationMarker.setLatLng(event.latlng);
+          } else {
+            locationMarker = L.marker(event.latlng).addTo(locationMap);
+          }
 
-    const observationBadge=r.observationMode==='earlier'
-      ? '<span class="badge">eerdere waarneming</span>'
-      : (r.observationMode==='now'
-          ? '<span class="badge">direct geregistreerd</span>'
-          : '');
+          $("gpsState").textContent =
+            `✓ Locatie gekozen op kaart: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
 
-    let endInfo='';
+          wind = null;
+          await updateWind();
+        });
+      }
+      function locationValues() {
+        if (coords) return coords;
+        const lat = parseFloat($("latitude").value),
+          lon = parseFloat($("longitude").value);
+        return Number.isFinite(lat) && Number.isFinite(lon)
+          ? { lat, lon }
+          : null;
+      }
+      async function updateWind() {
+        const moment = observedDate(),
+          loc = locationValues();
+        if (!moment || !loc) return null;
+        if (moment > new Date()) {
+          $("windState").textContent =
+            "Een toekomstig tijdstip is niet toegestaan.";
+          wind = null;
+          return null;
+        }
+        windLoading = true;
+        $("windState").textContent = "💨 Windgegevens ophalen…";
+        try {
+          wind = await fetchWindForDateTime(loc.lat, loc.lon, moment);
+          const deg =
+            wind.windDirectionDeg == null
+              ? "–"
+              : Math.round(wind.windDirectionDeg) + "°";
+          $("windState").textContent = "✓ Weergegevens opgehaald";
+          $("wSpeed").textContent = `${wind.windSpeedKmh ?? "–"} km/u`;
+          $("wDirection").textContent =
+            `${wind.windDirectionCompass ?? "–"} (${deg})`;
+          $("wTemperature").textContent = `${wind.temperatureC ?? "–"} °C`;
+          $("wHumidity").textContent = `${wind.relativeHumidityPct ?? "–"} %`;
+          $("wPressure").textContent = `${wind.pressureMslHpa ?? "–"} hPa`;
+          $("wPrecipitation").textContent = `${wind.precipitationMm ?? "–"} mm`;
+          $("wCloud").textContent = `${wind.cloudCoverPct ?? "–"} %`;
+          return wind;
+        } catch (error) {
+          console.error(error);
+          wind = null;
+          $("windState").textContent =
+            "Windgegevens niet beschikbaar. De melding kan toch worden opgeslagen.";
+          return null;
+        } finally {
+          windLoading = false;
+        }
+      }
+      ["observedDateTime", "latitude", "longitude"].forEach((id) => {
+        $(id).addEventListener("change", updateWind);
+      });
+      function earlierEndDate() {
+        if (timeMode !== "earlier") {
+          return null;
+        }
 
-    // Indien een eindtijd geregistreerd werd, toon de totale duur.
-    if(r.endedAt){
-      endInfo=`
+        const value = $("endDateTime").value;
+
+        if (!value) {
+          return null;
+        }
+
+        const date = new Date(value);
+
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+      $("newNow").onclick = () => {
+        reset("now");
+        show("form");
+      };
+      $("newEarlier").onclick = () => {
+        reset("earlier");
+        show("form");
+      };
+      $("cancel").onclick = () => {
+        reset("now");
+        show("home");
+      };
+      $("backHome").onclick = () => show("home");
+      $("gps").onclick = () => {
+        if (!navigator.geolocation) {
+          $("gpsState").textContent = "GPS wordt niet ondersteund.";
+          return;
+        }
+        $("gps").disabled = true;
+        $("gpsState").textContent = "📍 Locatie bepalen…";
+        navigator.geolocation.getCurrentPosition(
+          async (p) => {
+            coords = { lat: p.coords.latitude, lon: p.coords.longitude };
+            $("latitude").value = coords.lat.toFixed(6);
+            $("longitude").value = coords.lon.toFixed(6);
+            $("gpsState").textContent = "✓ Locatie bepaald";
+            $("gps").disabled = false;
+            await updateWind();
+          },
+          () => {
+            $("gpsState").textContent =
+              "Locatie niet beschikbaar. Bij een eerdere melding kun je coördinaten invullen.";
+            $("gps").disabled = false;
+          },
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
+        );
+      };
+      $("openMapBtn").onclick = () => {
+        $("mapPickerBox").classList.remove("hidden");
+
+        initializeLocationMap();
+
+        // Leaflet moet na het zichtbaar maken de afmetingen opnieuw berekenen.
+        setTimeout(() => {
+          locationMap.invalidateSize();
+
+          if (coords) {
+            locationMap.setView([coords.lat, coords.lon], 17);
+
+            if (locationMarker) {
+              locationMarker.setLatLng([coords.lat, coords.lon]);
+            } else {
+              locationMarker = L.marker([coords.lat, coords.lon]).addTo(
+                locationMap,
+              );
+            }
+          } else {
+            locationMap.setView([NEERVELP_CHURCH.lat, NEERVELP_CHURCH.lon], 16);
+          }
+        }, 50);
+      };
+
+      $("closeMapBtn").onclick = () => {
+        $("mapPickerBox").classList.add("hidden");
+      };
+      async function upload(r) {
+        if (!db) return false;
+        const row = {
+          id: r.id,
+          observed_at: r.ts,
+          ended_at: r.endedAt || null,
+          intensity: r.intensity,
+          intensity_label: r.label,
+          odor_type: r.odor || null,
+          latitude: r.lat,
+          longitude: r.lon,
+          comment: r.comment || null,
+          wind_speed_kmh: r.windSpeedKmh ?? null,
+          wind_direction_deg: r.windDirectionDeg ?? null,
+          wind_direction_compass: r.windDirectionCompass ?? null,
+          weather_observed_at: r.weatherObservedAt || null,
+          weather_source: r.weatherSource || null,
+          temperature_c: r.temperatureC ?? null,
+          relative_humidity_pct: r.relativeHumidityPct ?? null,
+          pressure_msl_hpa: r.pressureMslHpa ?? null,
+          precipitation_mm: r.precipitationMm ?? null,
+          cloud_cover_pct: r.cloudCoverPct ?? null,
+          observation_mode: r.observationMode || null,
+          user_id: currentUser?.id || null,
+        };
+        const { error } = await db.from("odor_reports").insert(row);
+        if (error) console.error(error);
+        return !error;
+      }
+      $("save").onclick = async () => {
+        if (level === null) {
+          return alert("Kies eerst de intensiteit.");
+        }
+
+        const moment = observedDate();
+
+        if (!moment) {
+          return alert("Vul een geldige begindatum en begintijd in.");
+        }
+
+        if (moment > new Date()) {
+          return alert("Je kunt geen melding in de toekomst registreren.");
+        }
+
+        const endMoment = earlierEndDate();
+        if (endMoment && endMoment < moment) {
+          return alert(
+            "De eindtijd kan niet vóór het begin van de waarneming liggen.",
+          );
+        }
+
+        if (endMoment && endMoment - moment > 24 * 60 * 60 * 1000) {
+          return alert("Een waarneming mag maximaal 24 uur duren.");
+        }
+
+        if (endMoment && endMoment > new Date()) {
+          return alert("De eindtijd kan niet in de toekomst liggen.");
+        }
+
+        const loc = locationValues();
+
+        if (windLoading) {
+          return alert("De windgegevens worden nog opgehaald.");
+        }
+
+        if (loc && !wind) {
+          await updateWind();
+        }
+
+        const odorValue = selectedOdor || $("otherOdor").value.trim();
+
+        const r = {
+          id: crypto.randomUUID(),
+          userId: currentUser?.id || null,
+          ts: moment.toISOString(),
+          intensity: level,
+          label: D[level][0],
+          odor: odorValue,
+          lat: loc?.lat ?? null,
+          lon: loc?.lon ?? null,
+          comment: $("comment").value.trim(),
+          windSpeedKmh: wind?.windSpeedKmh ?? null,
+          windDirectionDeg: wind?.windDirectionDeg ?? null,
+          windDirectionCompass: wind?.windDirectionCompass ?? null,
+          weatherObservedAt: wind?.weatherObservedAt ?? null,
+          weatherSource: wind?.weatherSource ?? null,
+          temperatureC: wind?.temperatureC ?? null,
+          relativeHumidityPct: wind?.relativeHumidityPct ?? null,
+          pressureMslHpa: wind?.pressureMslHpa ?? null,
+          precipitationMm: wind?.precipitationMm ?? null,
+          cloudCoverPct: wind?.cloudCoverPct ?? null,
+          observationMode: timeMode,
+          createdAt: new Date().toISOString(),
+          endedAt: endMoment ? endMoment.toISOString() : null,
+          synced: false,
+        };
+
+        const reports = local();
+        reports.unshift(r);
+        saveLocal(reports);
+
+        const ok = await upload(r);
+
+        if (ok) {
+          r.synced = true;
+          saveLocal(reports);
+        }
+
+        $("successText").textContent = ok
+          ? "De melding is online opgeslagen."
+          : "De melding is lokaal bewaard en wordt later gesynchroniseerd.";
+
+        reset();
+        show("success");
+      };
+      async function syncAll() {
+        let a = local();
+
+        if (db) {
+          // Probeer eerst alle nog niet gesynchroniseerde lokale meldingen te uploaden.
+          for (const r of a) {
+            if (!r.synced) {
+              r.synced = await upload(r);
+            }
+          }
+
+          // Bewaar voorlopig de uploadresultaten lokaal.
+          saveLocal(a);
+
+          const { data, error } = await db
+            .from("odor_reports")
+            .select("*")
+            .order("observed_at", { ascending: false });
+
+          if (!error && data) {
+            // Alleen meldingen waarvan upload NIET gelukt is,
+            // mogen lokaal blijven zonder in Supabase aanwezig te zijn.
+            const unsyncedLocal = a.filter((r) => !r.synced);
+
+            // Supabase is de bron voor alle gesynchroniseerde meldingen.
+            const serverReports = data.map((x) => ({
+              id: x.id,
+              userId: x.user_id,
+              ts: x.observed_at,
+              intensity: x.intensity,
+              label: x.intensity_label,
+              odor: x.odor_type,
+              lat: x.latitude,
+              lon: x.longitude,
+              comment: x.comment,
+              windSpeedKmh: x.wind_speed_kmh,
+              windDirectionDeg: x.wind_direction_deg,
+              windDirectionCompass: x.wind_direction_compass,
+              weatherObservedAt: x.weather_observed_at,
+              weatherSource: x.weather_source,
+              temperatureC: x.temperature_c,
+              relativeHumidityPct: x.relative_humidity_pct,
+              pressureMslHpa: x.pressure_msl_hpa,
+              precipitationMm: x.precipitation_mm,
+              cloudCoverPct: x.cloud_cover_pct,
+              observationMode: x.observation_mode || null,
+              endedAt: x.ended_at || null,
+              createdAt: x.created_at || null,
+              synced: true,
+            }));
+
+            // Serverrecords + eventueel nog niet geüploade lokale records.
+            const map = new Map();
+
+            serverReports.forEach((r) => map.set(r.id, r));
+            unsyncedLocal.forEach((r) => {
+              if (!map.has(r.id)) {
+                map.set(r.id, r);
+              }
+            });
+
+            a = [...map.values()].sort(
+              (x, y) => new Date(y.ts) - new Date(x.ts),
+            );
+
+            saveLocal(a);
+          } else if (error) {
+            console.error("SYNC SELECT ERROR:", error);
+          }
+        }
+
+        render(a);
+      }
+      function formatDuration(startValue, endValue) {
+        const start = new Date(startValue);
+        const end = new Date(endValue);
+        const diff = Math.max(0, end - start);
+
+        const totalMinutes = Math.floor(diff / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        if (hours > 0) {
+          return `${hours} u ${minutes} min`;
+        }
+
+        return `${minutes} min`;
+      }
+
+      function remainingEndTime(observedAt) {
+        const observed = new Date(observedAt).getTime();
+
+        if (Number.isNaN(observed)) return null;
+
+        const deadline = observed + 24 * 60 * 60 * 1000;
+        const remaining = deadline - Date.now();
+
+        if (remaining <= 0) return null;
+
+        const totalMinutes = Math.ceil(remaining / 60000);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+
+        if (hours > 0) {
+          return `${hours} u ${minutes} min`;
+        }
+
+        return `${minutes} min`;
+      }
+
+      function canDeleteReport(createdAt) {
+        if (!createdAt) return false;
+
+        const created = new Date(createdAt).getTime();
+        const now = Date.now();
+
+        return now - created < 12 * 60 * 60 * 1000 && now >= created;       
+      }
+
+      function localDateTimeValue(date = new Date()) {
+        const pad = (n) => String(n).padStart(2, "0");
+
+        return (
+          `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
+          `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+        );
+      }
+      function esc(s) {
+        return String(s || "").replace(
+          /[&<>\"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      }
+      function render(a = local()) {
+        const l = $("list");
+
+        l.innerHTML = a.length
+          ? ""
+          : '<p class="muted">Nog geen meldingen.</p>';
+
+        a.forEach((r) => {
+          const e = document.createElement("div");
+          e.className = "item";
+          e.style.borderColor = D[r.intensity]?.[1] || "#999";
+
+          const wh =
+            r.windSpeedKmh != null
+              ? `<div class="muted">💨 ${esc(r.windSpeedKmh)} km/u · ${esc(r.windDirectionCompass || "–")}${r.windDirectionDeg != null ? " (" + Math.round(r.windDirectionDeg) + "°)" : ""}</div>`
+              : "";
+
+          const env =
+            r.temperatureC != null ||
+            r.relativeHumidityPct != null ||
+            r.pressureMslHpa != null ||
+            r.precipitationMm != null ||
+            r.cloudCoverPct != null
+              ? `<div class="muted">🌡️ ${esc(r.temperatureC ?? "–")} °C · 💧 ${esc(r.relativeHumidityPct ?? "–")}% · 🧭 ${esc(r.pressureMslHpa ?? "–")} hPa · 🌧️ ${esc(r.precipitationMm ?? "–")} mm · ☁️ ${esc(r.cloudCoverPct ?? "–")}%</div>`
+              : "";
+
+          const observationBadge =
+            r.observationMode === "earlier"
+              ? '<span class="badge">eerdere waarneming</span>'
+              : r.observationMode === "now"
+                ? '<span class="badge">direct geregistreerd</span>'
+                : "";
+
+          let endInfo = "";
+
+          // Indien een eindtijd geregistreerd werd, toon de totale duur.
+          if (r.endedAt) {
+            endInfo = `
         <div class="endTimeArea">
           <span class="durationInfo">
-            Duur: ${formatDuration(r.ts,r.endedAt)}
+            Duur: ${formatDuration(r.ts, r.endedAt)}
           </span>
         </div>`;
-    }
+          }
 
-    // Bij elke eigen melding zonder eindtijd bekijken we
-// of de 24-uursperiode nog actief is.
-else if(r.userId===currentUser?.id && r.ts){
-  const remaining=remainingEndTime(r.ts);
+          // Bij elke eigen melding zonder eindtijd bekijken we
+          // of de 24-uursperiode nog actief is.
+          else if (r.userId === currentUser?.id && r.ts) {
+            const remaining = remainingEndTime(r.ts);
 
-  if(remaining){
-    endInfo=`
+            if (remaining) {
+              endInfo = `
       <div class="endTimeArea">
         <button type="button" class="endTimeAction" data-end-report="${r.id}">
           Eindtijd mogelijk: nog ${remaining}
         </button>
       </div>`;
-  }
-}
+            }
+          }
 
-const deleteInfo=
-  r.userId===currentUser?.id && canDeleteReport(r.createdAt)
-  ? `<button type="button"
+          const deleteInfo =
+            r.userId === currentUser?.id && canDeleteReport(r.createdAt)
+              ? `<button type="button"
              class="deleteReportAction"
              data-delete-report="${r.id}"
              title="Melding verwijderen"
              aria-label="Melding verwijderen">🗑️</button>`
-  : '';
-    
-    e.innerHTML=`
-      <b>${new Date(r.ts).toLocaleString('nl-BE')}</b>
+              : "";
+
+          e.innerHTML = `
+      <b>${new Date(r.ts).toLocaleString("nl-BE")}</b>
       ${observationBadge}
-      <div>${esc(r.label)}${r.odor?' · '+esc(r.odor):''}</div>
-      ${r.comment?'<small>'+esc(r.comment)+'</small>':''}
+      <div>${esc(r.label)}${r.odor ? " · " + esc(r.odor) : ""}</div>
+      ${r.comment ? "<small>" + esc(r.comment) + "</small>" : ""}
       ${wh}
       ${env}
 
-      <div class="sync ${r.synced?'ok':'warn'}">
-      ${r.synced?'☁ Online':'↻ Wacht op synchronisatie'}
+      <div class="sync ${r.synced ? "ok" : "warn"}">
+      ${r.synced ? "☁ Online" : "↻ Wacht op synchronisatie"}
       </div>
       
       ${deleteInfo}
@@ -1110,192 +1700,258 @@ const deleteInfo=
       ${endInfo}
     `;
 
-    l.appendChild(e);
-  });
+          l.appendChild(e);
+        });
 
-  const now=new Date();
+        const now = new Date();
 
-  $('today').textContent=a.filter(
-    x=>new Date(x.ts).toDateString()===now.toDateString()
-  ).length;
+        $("today").textContent = a.filter(
+          (x) => new Date(x.ts).toDateString() === now.toDateString(),
+        ).length;
 
-  $('week').textContent=a.filter(
-    x=>now-new Date(x.ts)<=7*864e5
-  ).length;
+        $("week").textContent = a.filter(
+          (x) => now - new Date(x.ts) <= 7 * 864e5,
+        ).length;
 
-  $('max').textContent=a.length
-    ? D[Math.max(...a.map(x=>x.intensity))][0]
-    : '–';
+        $("max").textContent = a.length
+          ? D[Math.max(...a.map((x) => x.intensity))][0]
+          : "–";
 
-  const c={};
+        const c = {};
 
-  a.map(x=>x.odor)
-    .filter(Boolean)
-    .forEach(x=>c[x]=(c[x]||0)+1);
+        a.forEach((x) => {
+          if (x.odor) c[x.odor] = (c[x.odor] || 0) + 1;
+        });
 
-  $('common').textContent=Object.keys(c).length
-    ? Object.entries(c).sort((x,y)=>y[1]-x[1])[0][0]
-    : '–';
-  document.querySelectorAll('[data-end-report]').forEach(button=>{
-  button.onclick=()=>{
-    openEndTimeEditor(button.dataset.endReport);
-  };
-});
-document.querySelectorAll('[data-delete-report]').forEach(button=>{
-  button.onclick=()=>{
-    openDeleteModal(button.dataset.deleteReport);
-  };
-});
-}
-let endTimeReportId=null;
+        $("common").textContent =
+          Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
 
-function openEndTimeEditor(reportId){
-  const reports=local();
-  const r=reports.find(x=>x.id===reportId);
+        document.querySelectorAll("[data-end-report]").forEach((button) => {
+          button.onclick = () => {
+            openEndTimeEditor(button.dataset.endReport);
+          };
+        });
 
-  if(!r)return;
+        document.querySelectorAll("[data-delete-report]").forEach((button) => {
+          button.onclick = () => {
+            openDeleteModal(button.dataset.deleteReport);
+          };
+        });
+      }
 
-  const remaining=r.ts
-  ? remainingEndTime(r.ts)
-  : null;
+      let endTimeReportId = null;
 
-  if(!remaining){
-    alert('De periode om een eindtijd toe te voegen is verstreken.');
-    return;
-  }
+      function openEndTimeEditor(reportId) {
+        const reports = local();
 
-  endTimeReportId=reportId;
+        const r = reports.find(
+          (x) => x.id === reportId && x.userId === currentUser?.id,
+        );
 
-  const endInput=$('customEndTime');
-  const now=new Date();
-  const observed=new Date(r.ts);
+        if (!r) return;
 
-  endInput.min=localDateTimeValue(observed);
-  endInput.max=localDateTimeValue(now);
-  endInput.value=localDateTimeValue(now);
-  
-  $('endTimeMessage').textContent='';
-  
-  $('endTimeModal').classList.remove('hidden');
-}
-  async function saveEndTime(endDate){
-  if(!endTimeReportId)return;
+        const observed = new Date(r.ts);
+        const maximumEnd = new Date(
+          Math.min(
+            Date.now(),
+            observed.getTime() + 24 * 60 * 60 * 1000,
+          ),
+        );
 
-  const reports=local();
-  const r=reports.find(x=>x.id===endTimeReportId);
+        if (maximumEnd <= observed) {
+          alert(
+            "De periode om voor deze melding een eindtijd toe te voegen is verstreken.",
+          );
+          render();
+          return;
+        }
 
-  if(!r)return;
+        endTimeReportId = reportId;
 
-  if(Number.isNaN(endDate.getTime())){
-    $('endTimeMessage').textContent='Kies een geldige datum en tijd.';
-    return;
-  }
+        $("customEndTime").value = localDateTimeValue(maximumEnd);
+        $("customEndTime").min = localDateTimeValue(observed);
+        $("customEndTime").max = localDateTimeValue(maximumEnd);
 
-  if(endDate < new Date(r.ts)){
-    $('endTimeMessage').textContent=
-      'De eindtijd kan niet vóór het begin van de waarneming liggen.';
-    return;
-  }
+        $("endTimeMessage").textContent = "";
+        $("endTimeModal").classList.remove("hidden");
+      }
 
-  if(endDate > new Date()){
-    $('endTimeMessage').textContent=
-      'De eindtijd kan niet in de toekomst liggen.';
-    return;
-  }
+      async function saveReportEndTime(reportId, endDate) {
+        if (!db || !currentUser) {
+          throw new Error("Niet aangemeld.");
+        }
 
-  $('endTimeMessage').textContent='Eindtijd opslaan…';
+        const reports = local();
 
-  const {error}=await db.rpc('end_odor_report',{
-    report_id:r.id,
-    end_time:endDate.toISOString()
-  });
+        const r = reports.find(
+          (x) => x.id === reportId && x.userId === currentUser.id,
+        );
 
-  if(error){
-    console.error('END REPORT ERROR:',error);
-    $('endTimeMessage').textContent=
-      'De eindtijd kon niet worden opgeslagen.';
-    return;
-  }
+        if (!r) {
+          throw new Error("Melding niet gevonden.");
+        }
 
-  $('endTimeModal').classList.add('hidden');
-  endTimeReportId=null;
+        const observed = new Date(r.ts);
+        const now = new Date();
+        const maximumEnd = new Date(
+          observed.getTime() + 24 * 60 * 60 * 1000,
+        );
 
-  await syncAll();
-}
-  $('endNowBtn').onclick=()=>{
-  saveEndTime(new Date());
-};
+        if (!(endDate instanceof Date) || Number.isNaN(endDate.getTime())) {
+          throw new Error("Ongeldige eindtijd.");
+        }
 
-$('saveEndTimeBtn').onclick=()=>{
-  const value=$('customEndTime').value;
+        if (endDate < observed) {
+          throw new Error("De eindtijd kan niet vóór de melding liggen.");
+        }
 
-  if(!value){
-    $('endTimeMessage').textContent='Kies eerst een eindtijd.';
-    return;
-  }
+        if (endDate > now) {
+          throw new Error("De eindtijd kan niet in de toekomst liggen.");
+        }
 
-  saveEndTime(new Date(value));
-};
+        if (endDate > maximumEnd) {
+          throw new Error(
+            "De periode om voor deze melding een eindtijd toe te voegen is verstreken.",
+          );
+        }
 
-$('cancelEndTimeBtn').onclick=()=>{
-  $('endTimeModal').classList.add('hidden');
-  $('endTimeMessage').textContent='';
-  endTimeReportId=null;
-};
-let deleteReportId=null;
+        const { error } = await db.rpc("end_odor_report", {
+          report_id: reportId,
+          new_ended_at: endDate.toISOString(),
+        });
 
-function openDeleteModal(reportId){
-  const reports=local();
-  const r=reports.find(x=>x.id===reportId);
+        if (error) {
+          console.error("END TIME RPC ERROR:", error);
+          throw new Error("De eindtijd kon online niet worden opgeslagen.");
+        }
 
-  if(!r)return;
+        r.endedAt = endDate.toISOString();
+        saveLocal(reports);
 
-  if(!canDeleteReport(r.createdAt)){
-    alert('De periode om deze melding te verwijderen is verstreken.');
-    render();
-    return;
-  }
+        await syncAll();
+      }
 
-  deleteReportId=reportId;
+      $("endNowBtn").onclick = async () => {
+        if (!endTimeReportId) return;
 
-  $('deleteMessage').textContent='';
-  $('deleteModal').classList.remove('hidden');
-}
-$('cancelDeleteBtn').onclick=()=>{
-  $('deleteModal').classList.add('hidden');
-  $('deleteMessage').textContent='';
-  deleteReportId=null;
-};  
-$('confirmDeleteBtn').onclick=async()=>{
-  if(!deleteReportId)return;
+        $("endTimeMessage").textContent = "Eindtijd opslaan…";
+        $("endNowBtn").disabled = true;
+        $("saveEndTimeBtn").disabled = true;
 
-  const id=deleteReportId;
+        try {
+          await saveReportEndTime(endTimeReportId, new Date());
 
-  $('deleteMessage').textContent='Melding verwijderen…';
-  $('confirmDeleteBtn').disabled=true;
+          $("endTimeModal").classList.add("hidden");
+          endTimeReportId = null;
+        } catch (error) {
+          console.error(error);
+          $("endTimeMessage").textContent =
+            error.message || "De eindtijd kon niet worden opgeslagen.";
+        } finally {
+          $("endNowBtn").disabled = false;
+          $("saveEndTimeBtn").disabled = false;
+        }
+      };
 
-  const {error}=await db.rpc('delete_odor_report',{
-    report_id:id
-  });
+      $("saveEndTimeBtn").onclick = async () => {
+        if (!endTimeReportId) return;
 
-  $('confirmDeleteBtn').disabled=false;
+        const value = $("customEndTime").value;
 
-  if(error){
-    console.error('DELETE REPORT ERROR:',error);
-    $('deleteMessage').textContent='De melding kon niet worden verwijderd.';
-    return;
-  }
+        if (!value) {
+          $("endTimeMessage").textContent = "Kies eerst een eindtijd.";
+          return;
+        }
 
-  // Verwijder dezelfde melding ook uit de lokale opslag.
-  const remaining=local().filter(r=>r.id!==id);
-  saveLocal(remaining);
+        const endDate = new Date(value);
 
-  deleteReportId=null;
-  $('deleteMessage').textContent='';
-  $('deleteModal').classList.add('hidden');
+        $("endTimeMessage").textContent = "Eindtijd opslaan…";
+        $("endNowBtn").disabled = true;
+        $("saveEndTimeBtn").disabled = true;
 
-  await syncAll();
-};  
-$('sync').onclick=syncAll;document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.page));reset('now');render();if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
-</script>
-</body></html>
+        try {
+          await saveReportEndTime(endTimeReportId, endDate);
+
+          $("endTimeModal").classList.add("hidden");
+          endTimeReportId = null;
+        } catch (error) {
+          console.error(error);
+          $("endTimeMessage").textContent =
+            error.message || "De eindtijd kon niet worden opgeslagen.";
+        } finally {
+          $("endNowBtn").disabled = false;
+          $("saveEndTimeBtn").disabled = false;
+        }
+      };
+
+      $("cancelEndTimeBtn").onclick = () => {
+        $("endTimeModal").classList.add("hidden");
+        $("endTimeMessage").textContent = "";
+        endTimeReportId = null;
+      };
+      let deleteReportId = null;
+
+      function openDeleteModal(reportId) {
+        const reports = local();
+        const r = reports.find((x) => x.id === reportId);
+
+        if (!r) return;
+
+        if (!canDeleteReport(r.createdAt)) {
+          alert("De periode om deze melding te verwijderen is verstreken.");
+          render();
+          return;
+        }
+
+        deleteReportId = reportId;
+
+        $("deleteMessage").textContent = "";
+        $("deleteModal").classList.remove("hidden");
+      }
+      $("cancelDeleteBtn").onclick = () => {
+        $("deleteModal").classList.add("hidden");
+        $("deleteMessage").textContent = "";
+        deleteReportId = null;
+      };
+      $("confirmDeleteBtn").onclick = async () => {
+        if (!deleteReportId) return;
+
+        const id = deleteReportId;
+
+        $("deleteMessage").textContent = "Melding verwijderen…";
+        $("confirmDeleteBtn").disabled = true;
+
+        const { error } = await db.rpc("delete_odor_report", {
+          report_id: id,
+        });
+
+        $("confirmDeleteBtn").disabled = false;
+
+        if (error) {
+          console.error("DELETE REPORT ERROR:", error);
+          $("deleteMessage").textContent =
+            "De melding kon niet worden verwijderd.";
+          return;
+        }
+
+        // Verwijder dezelfde melding ook uit de lokale opslag.
+        const remaining = local().filter((r) => r.id !== id);
+        saveLocal(remaining);
+
+        deleteReportId = null;
+        $("deleteMessage").textContent = "";
+        $("deleteModal").classList.add("hidden");
+
+        await syncAll();
+      };
+      $("sync").onclick = syncAll;
+      document
+        .querySelectorAll(".nav button")
+        .forEach((b) => (b.onclick = () => show(b.dataset.page)));
+      reset("now");
+      render();
+      if ("serviceWorker" in navigator)
+        navigator.serviceWorker.register("./sw.js");
+    </script>
+  </body>
+</html>
