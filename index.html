@@ -1188,15 +1188,30 @@
         $("adminUsersBtn").classList.add("hidden");
         updateAuthUI();
       };
-      function show(id) {
+      async function show(id) {
+        if (currentUser) {
+          const blocked = await checkBlockedUser();
+      
+          if (blocked) {
+            return;
+          }
+        }
+      
         document
           .querySelectorAll("main section")
           .forEach((s) => s.classList.add("hidden"));
+      
         $(id).classList.remove("hidden");
+      
         document
           .querySelectorAll(".nav button")
-          .forEach((b) => b.classList.toggle("active", b.dataset.page === id));
-        if (id === "reports" || id === "dashboard") syncAll();
+          .forEach((b) =>
+            b.classList.toggle("active", b.dataset.page === id)
+          );
+      
+        if (id === "reports" || id === "dashboard") {
+          await syncAll();
+        }
       }
       document.querySelectorAll(".odorTile").forEach((button) => {
         button.onclick = () => {
