@@ -1068,6 +1068,25 @@
           $("profileNewEmail").value = "";
         }
       }
+      async function forceBlockedLogout() {
+        if (db) {
+          try {
+            await db.auth.signOut();
+          } catch (error) {
+            console.error("BLOCKED SIGNOUT ERROR:", error);
+          }
+        }
+      
+        currentUser = null;
+        isAdmin = false;
+      
+        $("adminUsersBtn").classList.add("hidden");
+        updateAuthUI();
+      
+        $("loginMessage").textContent =
+          "Je account is geblokkeerd. Neem contact op met de beheerder.";
+      }
+      
       async function checkBlockedUser() {
         if (!db || !currentUser) return false;
       
@@ -1081,18 +1100,7 @@
         }
       
         if (data !== true) {
-          await db.auth.signOut();
-      
-          currentUser = null;
-          isAdmin = false;
-      
-          $("adminUsersBtn").classList.add("hidden");
-      
-          updateAuthUI();
-      
-          $("loginMessage").textContent =
-            "Je account is geblokkeerd. Neem contact op met de beheerder.";
-      
+          await forceBlockedLogout();
           return true;
         }
       
@@ -1162,8 +1170,20 @@
 
         if (error) {
           console.error("LOGIN ERROR:", error);
-          $("loginMessage").textContent =
-            "Aanmelden mislukt. Controleer je gegevens.";
+        
+          const message = String(error.message || "").toLowerCase();
+        
+          if (
+            message.includes("banned") ||
+            message.includes("blocked")
+          ) {
+            $("loginMessage").textContent =
+              "Je account is geblokkeerd. Neem contact op met de beheerder.";
+          } else {
+            $("loginMessage").textContent =
+              "Aanmelden mislukt. Controleer je gegevens.";
+          }
+        
           return;
         }
 
@@ -2132,12 +2152,20 @@
         updateAuthUI();
       }
       $("profileBtn").onclick = async () => {
+        if (await checkBlockedUser()) return;
+      
         setProfileMessage("profileEmailMessage", "");
         setProfileMessage("profilePasswordMessage", "");
         $("profileNewPassword").value = "";
         $("profileConfirmPassword").value = "";
-        try { await refreshCurrentUser(); show("profile"); }
-        catch (error) { console.error("PROFILE LOAD ERROR:", error); alert("Je profiel kon niet worden geladen."); }
+      
+        try {
+          await refreshCurrentUser();
+          await show("profile");
+        } catch (error) {
+          console.error("PROFILE LOAD ERROR:", error);
+          alert("Je profiel kon niet worden geladen.");
+        }
       };
       $("profileBackBtn").onclick = () => show("home");
       $("updateEmailBtn").onclick = async () => {
