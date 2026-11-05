@@ -1071,18 +1071,16 @@
       async function checkBlockedUser() {
         if (!db || !currentUser) return false;
       
-        const { data, error } = await db
-          .from("profiles")
-          .select("blocked")
-          .eq("id", currentUser.id)
-          .maybeSingle();
+        const { data, error } = await db.rpc(
+          "is_current_user_active"
+        );
       
         if (error) {
           console.error("BLOCK CHECK ERROR:", error);
           return false;
         }
       
-        if (data?.blocked === true) {
+        if (data !== true) {
           await db.auth.signOut();
       
           currentUser = null;
