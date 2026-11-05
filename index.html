@@ -541,6 +541,35 @@
         background: #e7f1ef;
       }
 
+      #reportWindMap {
+        width: 100%;
+        height: 320px;
+        border: 1px solid #ccd6d3;
+        border-radius: 14px;
+        overflow: hidden;
+        background: #e7f1ef;
+        margin-top: 12px;
+      }
+      
+      #reportWindMap .leaflet-container {
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+      }
+      
+      .windSpeedLabel {
+        background: #fff;
+        border: 2px solid #0f766e;
+        border-radius: 10px;
+        color: #0f5f59;
+        font-weight: 800;
+        padding: 4px 7px;
+        white-space: nowrap;
+        box-shadow: 0 2px 7px rgba(0, 0, 0, 0.16);
+      }
+
       #mapPickerBox .leaflet-container {
         font-family:
           system-ui,
@@ -924,6 +953,23 @@
         </div>
       </section>
     </main>
+    <div id="reportMapModal" class="gmModal hidden">
+      <div class="gmModalCard">
+        <h2>Windrichting bij melding</h2>
+    
+        <div id="reportWindMap"></div>
+    
+        <p id="reportMapMessage" class="muted"></p>
+    
+        <button
+          id="closeReportMapBtn"
+          class="btn secondary"
+          type="button"
+        >
+          Sluiten
+        </button>
+      </div>
+    </div>
     <div id="endTimeModal" class="gmModal hidden">
       <div class="gmModalCard">
         <h2>Eindtijd registreren</h2>
@@ -1761,6 +1807,176 @@
           (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
         );
       }
+      let reportWindMap = null;
+      let reportWindLayer = null;
+      
+      function destinationPoint(lat, lon, bearingDeg, distanceMeters) {
+        const earthRadius = 6371000;
+        const bearing = bearingDeg * Math.PI / 180;
+        const lat1 = lat * Math.PI / 180;
+        const lon1 = lon * Math.PI / 180;
+        const angularDistance = distanceMeters / earthRadius;
+      
+        const lat2 = Math.asin(
+          Math.sin(lat1) * Math.cos(angularDistance) +
+          Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing)
+        );
+      
+        const lon2 = lon1 + Math.atan2(
+          Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1),
+          Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2)
+        );
+      
+        return [
+          lat2 * 180 / Math.PI,
+          lon2 * 180 / Math.PI
+        ];
+      }
+      
+      function closeReportWindMap() {
+        $("reportMapModal").classList.add("hidden");
+      
+        if (reportWindMap) {
+          reportWindMap.remove();
+          reportWindMap = null;
+          reportWindLayer = null;
+        }
+      
+        $("reportWindMap").innerHTML = "";
+      }
+      
+      async function openReportWindMap(reportId) {
+        if (await checkBlockedUser()) return;
+      
+        const report = local().find((r) => r.id === reportId);
+        if (!report) return;
+      
+        const lat = Number(report.lat);
+        const lon = Number(report.lon);
+        const windDirection = Number(report.windDirectionDeg);
+        const windSpeed = Number(report.windSpeedKmh);
+      
+        const hasData =
+          Number.isFinite(lat) &&
+          Number.isFinite(lon) &&
+          Number.isFinite(windDirection) &&
+          Number.isFinite(windSpeed);
+      
+        $("reportMapModal").classList.remove("hidden");
+        $("reportMapMessage").textContent = "";
+      
+        if (!hasData) {
+          $("reportWindMap").classList.add("hidden");
+          $("reportMapMessage").textContent =
+            "Voor deze melding werden geen volledige weer- of locatiegegevens geregistreerd.";
+          return;
+        }
+      
+        $("reportWindMap").classList.remove("hidden");
+      
+        if (reportWindMap) {
+          reportWindMap.remove();
+          reportWindMap = null;
+        }
+      
+        reportWindMap = L.map("reportWindMap", {
+          zoomControl: true,
+        }).setView([lat, lon], 16);
+      
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "&copy; OpenStreetMap contributors",
+        }).addTo(reportWindMap);
+      
+        const locationPoint = [lat, lon];
+      
+        // Meteorologische windrichting geeft aan WAARUIT de wind komt.
+        // Het begin van de pijl ligt daarom in windDirectionDeg.
+        const windOrigin = destinationPoint(
+          lat,
+          lon,
+          windDirection,
+          350
+        );
+      
+        L.circleMarker(locationPoint, {
+          radius: 8,
+          color: "#ffffff",
+          weight: 3,
+          fillColor: "#0f766e",
+          fillOpacity: 1,
+        }).addTo(reportWindMap);
+      
+        reportWindLayer = L.polyline(
+          [windOrigin, locationPoint],
+          {
+            color: "#0f766e",
+            weight: 5,
+            opacity: 0.95,
+          }
+        ).addTo(reportWindMap);
+      
+        const midpoint = [
+          (windOrigin[0] + lat) / 2,
+          (windOrigin[1] + lon) / 2
+        ];
+      
+        L.marker(midpoint, {
+          interactive: false,
+          icon: L.divIcon({
+            className: "",
+            html: `<div class="windSpeedLabel">${esc(
+              windSpeed.toLocaleString("nl-BE", {
+                maximumFractionDigits: 1
+              })
+            )} km/u</div>`,
+            iconSize: null,
+          }),
+        }).addTo(reportWindMap);
+      
+        // Pijlpunt aan de kant van de waarnemingslocatie.
+        const arrowIcon = L.divIcon({
+          className: "",
+          html: `<div style="
+            color:#0f766e;
+            font-size:30px;
+            font-weight:900;
+            line-height:30px;
+            transform:rotate(${windDirection}deg);
+            transform-origin:center;
+          ">↓</div>`,
+          iconSize: [30, 30],
+          iconAnchor: [15, 15],
+        });
+      
+        L.marker(locationPoint, {
+          interactive: false,
+          icon: arrowIcon,
+        }).addTo(reportWindMap);
+      
+        const bounds = L.latLngBounds([
+          windOrigin,
+          locationPoint
+        ]);
+      
+        reportWindMap.fitBounds(bounds.pad(0.45));
+      
+        setTimeout(() => {
+          reportWindMap.invalidateSize();
+        }, 50);
+      
+        const compass =
+          report.windDirectionCompass
+            ? ` uit ${report.windDirectionCompass}`
+            : "";
+      
+        $("reportMapMessage").textContent =
+          `Wind${compass} · ${windSpeed.toLocaleString("nl-BE", {
+            maximumFractionDigits: 1
+          })} km/u`;
+      }
+      
+      $("closeReportMapBtn").onclick = closeReportWindMap;
       function render(a = local()) {
         const l = $("list");
 
@@ -1772,7 +1988,18 @@
           const e = document.createElement("div");
           e.className = "item";
           e.style.borderColor = D[r.intensity]?.[1] || "#999";
-
+          e.style.cursor = "pointer";
+          
+          e.onclick = async (event) => {
+            if (
+              event.target.closest("[data-end-report]") ||
+              event.target.closest("[data-delete-report]")
+            ) {
+              return;
+            }
+          
+            await openReportWindMap(r.id);
+          };
           const wh =
             r.windSpeedKmh != null
               ? `<div class="muted">💨 ${esc(r.windSpeedKmh)} km/u · ${esc(r.windDirectionCompass || "–")}${r.windDirectionDeg != null ? " (" + Math.round(r.windDirectionDeg) + "°)" : ""}</div>`
