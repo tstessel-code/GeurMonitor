@@ -1524,9 +1524,34 @@
       };
       $("emailReportNo").onclick = () => show("reports");
 
-      $("emailReportYes").onclick = () => {
-        alert("Test v0.62: hier wordt straks de e-mail geopend.");
-        show("reports");
+      $("emailReportYes").onclick = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("email_recipients")
+            .select("name, email, recipient_type")
+            .eq("is_active", true)
+            .eq("environment", "test");
+      
+          if (error) throw error;
+      
+          if (!data || data.length === 0) {
+            alert("Geen actieve test-e-mailadressen gevonden.");
+            return;
+          }
+      
+          const adressen = data
+            .map(item => `${item.name}: ${item.email} (${item.recipient_type})`)
+            .join("\n");
+      
+          alert(
+            "Test v0.62 - ontvangers opgehaald uit Supabase:\n\n" +
+            adressen
+          );
+      
+        } catch (err) {
+          console.error("Fout bij ophalen e-mailadressen:", err);
+          alert("De e-mailadressen konden niet worden opgehaald.");
+        }
       };
       $("gps").onclick = () => {
         if (!navigator.geolocation) {
