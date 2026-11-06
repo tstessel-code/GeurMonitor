@@ -877,8 +877,24 @@
         <div class="card success">
           <div class="check">✓</div>
           <h2>Melding succesvol opgeslagen</h2>
+      
           <p id="successText">De melding staat online.</p>
-          <button class="btn" id="backHome">Terug naar hoofdpagina</button>
+      
+          <div class="box" style="margin-top: 20px;">
+            <p style="margin-top: 0; font-weight: 700;">
+              Wilt u deze melding per e-mail bezorgen aan de bevoegde instanties en gemeente Boutersem?
+            </p>
+      
+            <div class="choice">
+              <button type="button" id="emailReportYes">
+                Ja
+              </button>
+      
+              <button type="button" id="emailReportNo">
+                Neen
+              </button>
+            </div>
+          </div>
         </div>
       </section>
       <section id="reports" class="hidden">
@@ -1506,7 +1522,12 @@
         reset("now");
         show("home");
       };
-      $("backHome").onclick = () => show("home");
+      $("emailReportNo").onclick = () => show("reports");
+
+      $("emailReportYes").onclick = () => {
+        alert("Test v0.62: hier wordt straks de e-mail geopend.");
+        show("reports");
+      };
       $("gps").onclick = () => {
         if (!navigator.geolocation) {
           $("gpsState").textContent = "GPS wordt niet ondersteund.";
