@@ -971,21 +971,27 @@
     </main>
     <div id="emailSenderModal" class="gmModal hidden">
       <div class="gmModalCard">
-        <h2>Controleer uw afzenderadres</h2>
+        <h2>Controleer uw e-mail</h2>
     
         <p>
           Gebruikt u meerdere e-mailaccounts op dit toestel?
-          Controleer vóór het verzenden of bij <b>Van:</b>
+          Controleer vóór het verzenden of bij <b>Van/From:</b>
           het juiste e-mailadres geselecteerd staat.
         </p>
     
-        <button id="openEmailBtn" class="btn" type="button">
-          ✉️ E-mail openen
-        </button>
+        <p style="margin-top: 20px; font-weight: 700;">
+          Wilt u uw locatiegegevens opnemen in de e-mail?
+        </p>
     
-        <button id="cancelEmailBtn" class="btn secondary" type="button">
-          Annuleren
-        </button>
+        <div class="choice">
+          <button id="emailLocationYes" type="button">
+            Ja
+          </button>
+    
+          <button id="emailLocationNo" type="button">
+            Neen
+          </button>
+        </div>
       </div>
     </div>
     <div id="reportMapModal" class="gmModal hidden">
@@ -1091,6 +1097,7 @@
       let locationMap = null;
       let locationMarker = null;
       let pendingMailto = null;
+      let pendingMailtoWithoutLocation = null;
       const $ = (id) => document.getElementById(id);
       const storageKey = () =>
         currentUser ? `geurmonitor:${currentUser.id}` : "geurmonitor:guest";
@@ -1593,7 +1600,7 @@
           
           const subject = "TEST GeurMonitor - geurmelding";
           
-          const body =
+          const bodyWithLocation =
           `Dit is een testbericht vanuit GeurMonitor.
           
           GEURMELDING
@@ -1617,20 +1624,32 @@
           Bewolking: ${r.cloudCoverPct != null ? r.cloudCoverPct + " %" : "Niet beschikbaar"}
           
           Dit bericht werd opgesteld vanuit GeurMonitor v0.62.`;
-          let mailto =
-            "mailto:" + encodeURIComponent(to.join(",")) +
-            "?subject=" + encodeURIComponent(subject) +
-            "&body=" + encodeURIComponent(body);
-      
-          if (cc.length > 0) {
-            mailto += "&cc=" + encodeURIComponent(cc.join(","));
-          }
-      
-          if (bcc.length > 0) {
-            mailto += "&bcc=" + encodeURIComponent(bcc.join(","));
-          }
-      
-          pendingMailto = mailto;
+
+          const bodyWithoutLocation = bodyWithLocation.replace(
+            /LOCATIE[\s\S]*?(?=WEERGEGEVENS)/,
+            ""
+          );
+          
+          const buildMailto = (body) => {
+            let mailto =
+              "mailto:" + encodeURIComponent(to.join(",")) +
+              "?subject=" + encodeURIComponent(subject) +
+              "&body=" + encodeURIComponent(body);
+          
+            if (cc.length > 0) {
+              mailto += "&cc=" + encodeURIComponent(cc.join(","));
+            }
+          
+            if (bcc.length > 0) {
+              mailto += "&bcc=" + encodeURIComponent(bcc.join(","));
+            }
+          
+            return mailto;
+          };
+          
+          pendingMailto = buildMailto(bodyWithLocation);
+          pendingMailtoWithoutLocation = buildMailto(bodyWithoutLocation);
+          
           $("emailSenderModal").classList.remove("hidden");
       
         } catch (err) {
@@ -1642,6 +1661,7 @@
           );
         }
       };
+      
       $("gps").onclick = () => {
         if (!navigator.geolocation) {
           $("gpsState").textContent = "GPS wordt niet ondersteund.";
@@ -1666,16 +1686,27 @@
           { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
         );
       };
-      $("cancelEmailBtn").onclick = () => {
-        $("emailSenderModal").classList.add("hidden");
-        pendingMailto = null;
-      };
-      
-      $("openEmailBtn").onclick = () => {
+      $("emailLocationYes").onclick = () => {
         if (!pendingMailto) return;
       
         const mailto = pendingMailto;
+      
         pendingMailto = null;
+        pendingMailtoWithoutLocation = null;
+      
+        $("emailSenderModal").classList.add("hidden");
+      
+        show("reports");
+        window.location.href = mailto;
+      };
+      
+      $("emailLocationNo").onclick = () => {
+        if (!pendingMailtoWithoutLocation) return;
+      
+        const mailto = pendingMailtoWithoutLocation;
+      
+        pendingMailto = null;
+        pendingMailtoWithoutLocation = null;
       
         $("emailSenderModal").classList.add("hidden");
       
