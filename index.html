@@ -1061,7 +1061,8 @@
         windLoading = false,
         selectedOdor = "",
         currentUser = null,
-        isAdmin = false;
+        isAdmin = false,
+        lastSavedReport = null;
       const ADMIN_FUNCTION = "admin-users";
       const NEERVELP_CHURCH = {
         lat: 50.820261,
@@ -1556,15 +1557,46 @@
             return;
           }
       
+          if (!lastSavedReport) {
+            alert("De zojuist opgeslagen melding kon niet worden gevonden.");
+            return;
+          }
+          
+          const r = lastSavedReport;
+          
+          const datumTijd = new Date(r.ts).toLocaleString("nl-BE");
+          
+          const windrichting =
+            r.windDirectionDeg != null
+              ? `${r.windDirectionCompass || "–"} (${Math.round(r.windDirectionDeg)}°)`
+              : "Niet beschikbaar";
+          
           const subject = "TEST GeurMonitor - geurmelding";
-      
+          
           const body =
-      `Dit is een testbericht vanuit GeurMonitor.
-      
-      De definitieve inhoud van de geurmelding wordt later toegevoegd.
-      
-      Dit bericht werd opgesteld vanuit GeurMonitor v0.62.`;
-      
+          `Dit is een testbericht vanuit GeurMonitor.
+          
+          GEURMELDING
+          
+          Datum en tijd: ${datumTijd}
+          Intensiteit: ${r.intensity} - ${r.label}
+          Geurtype: ${r.odor || "Niet opgegeven"}
+          Opmerking: ${r.comment || "Geen"}
+          
+          LOCATIE
+          Breedtegraad: ${r.lat ?? "Niet beschikbaar"}
+          Lengtegraad: ${r.lon ?? "Niet beschikbaar"}
+          
+          WEERGEGEVENS
+          Windsnelheid: ${r.windSpeedKmh != null ? r.windSpeedKmh + " km/u" : "Niet beschikbaar"}
+          Windrichting: ${windrichting}
+          Temperatuur: ${r.temperatureC != null ? r.temperatureC + " °C" : "Niet beschikbaar"}
+          Luchtvochtigheid: ${r.relativeHumidityPct != null ? r.relativeHumidityPct + " %" : "Niet beschikbaar"}
+          Luchtdruk: ${r.pressureMslHpa != null ? r.pressureMslHpa + " hPa" : "Niet beschikbaar"}
+          Neerslag: ${r.precipitationMm != null ? r.precipitationMm + " mm" : "Niet beschikbaar"}
+          Bewolking: ${r.cloudCoverPct != null ? r.cloudCoverPct + " %" : "Niet beschikbaar"}
+          
+          Dit bericht werd opgesteld vanuit GeurMonitor v0.62.`;
           let mailto =
             "mailto:" + encodeURIComponent(to.join(",")) +
             "?subject=" + encodeURIComponent(subject) +
@@ -1745,16 +1777,17 @@
         saveLocal(reports);
 
         const ok = await upload(r);
-
         if (ok) {
           r.synced = true;
           saveLocal(reports);
         }
-
+        
+        lastSavedReport = { ...r };
+        
         $("successText").textContent = ok
           ? "De melding is online opgeslagen."
           : "De melding is lokaal bewaard en wordt later gesynchroniseerd.";
-
+        
         reset();
         show("success");
       };
