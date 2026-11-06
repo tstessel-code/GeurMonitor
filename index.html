@@ -2982,9 +2982,35 @@
               </span>
       
             </div>
+
+            <div class="adminActions">
+              <button
+                class="btn secondary editRecipientBtn"
+                type="button"
+                data-id="${recipient.id}">
+                Bewerken
+              </button>
+            </div>
           `;
       
           list.appendChild(card);
+
+          card.querySelector(".editRecipientBtn").onclick = () => {
+            editingRecipientId = recipient.id;
+          
+            $("recipientModalTitle").textContent = "Ontvanger bewerken";
+          
+            $("recipientName").value = recipient.name || "";
+            $("recipientEmail").value = recipient.email || "";
+            $("recipientType").value = recipient.recipient_type || "to";
+            $("recipientActive").value =
+              recipient.is_active === true ? "true" : "false";
+          
+            $("recipientModalMessage").textContent = "";
+          
+            $("recipientModal").classList.remove("hidden");
+          };
+
         });
       }
       async function loadAdminRecipients() {
@@ -3099,20 +3125,49 @@
         
           $("saveRecipientBtn").disabled = true;
           $("recipientModalMessage").textContent =
-            "Ontvanger opslaan…";
+            editingRecipientId
+              ? "Wijzigingen opslaan…"
+              : "Ontvanger opslaan…";
         
           try {
-            const { error } = await db
-              .from("email_recipients")
-              .insert({
-                name: name,
-                email: email,
-                recipient_type: recipientType,
-                is_active: isActive,
-                environment: "test"
-              });
+        
+            let error;
+        
+            if (editingRecipientId) {
+        
+              // BESTAANDE ONTVANGER AANPASSEN
+              const result = await db
+                .from("email_recipients")
+                .update({
+                  name: name,
+                  email: email,
+                  recipient_type: recipientType,
+                  is_active: isActive,
+                  updated_at: new Date().toISOString()
+                })
+                .eq("id", editingRecipientId);
+        
+              error = result.error;
+        
+            } else {
+        
+              // NIEUWE ONTVANGER TOEVOEGEN
+              const result = await db
+                .from("email_recipients")
+                .insert({
+                  name: name,
+                  email: email,
+                  recipient_type: recipientType,
+                  is_active: isActive,
+                  environment: "test"
+                });
+        
+              error = result.error;
+            }
         
             if (error) throw error;
+        
+            editingRecipientId = null;
         
             $("recipientModal").classList.add("hidden");
             $("recipientModalMessage").textContent = "";
@@ -3120,10 +3175,11 @@
             await loadAdminRecipients();
         
           } catch (error) {
-            console.error("RECIPIENT INSERT ERROR:", error);
+            console.error("RECIPIENT SAVE ERROR:", error);
         
             $("recipientModalMessage").textContent =
-              error.message || "De ontvanger kon niet worden opgeslagen.";
+              error.message ||
+              "De ontvanger kon niet worden opgeslagen.";
         
           } finally {
             $("saveRecipientBtn").disabled = false;
