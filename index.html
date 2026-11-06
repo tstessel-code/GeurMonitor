@@ -2938,6 +2938,82 @@
               };
             });
         }
+      function renderAdminRecipients(recipients = []) {
+        const list = $("adminRecipientsList");
+      
+        list.innerHTML = recipients.length
+          ? ""
+          : '<p class="muted">Geen e-mailontvangers gevonden.</p>';
+      
+        recipients.forEach((recipient) => {
+          const active = recipient.is_active === true;
+      
+          const typeLabels = {
+            to: "Aan",
+            cc: "CC",
+            bcc: "BCC"
+          };
+      
+          const card = document.createElement("div");
+          card.className = "userCard";
+      
+          card.innerHTML = `
+            <div class="userHeader">
+      
+              <div>
+                <div class="userEmail">
+                  ${esc(recipient.name || "Naamloos")}
+                </div>
+      
+                <div class="muted">
+                  ${esc(recipient.email || "")}
+                </div>
+      
+                <div class="muted">
+                  Type: ${esc(typeLabels[recipient.recipient_type] || recipient.recipient_type)}
+                </div>
+              </div>
+      
+              <span class="statusBadge ${
+                active ? "statusActive" : "statusBlocked"
+              }">
+                ${active ? "Actief" : "Niet actief"}
+              </span>
+      
+            </div>
+          `;
+      
+          list.appendChild(card);
+        });
+      }
+      async function loadAdminRecipients() {
+        if (!isAdmin || !db) return;
+      
+        $("adminRecipientsMessage").textContent =
+          "E-mailontvangers laden…";
+      
+        try {
+          const { data, error } = await db
+            .from("email_recipients")
+            .select(
+              "id, name, email, recipient_type, is_active, created_at, updated_at"
+            )
+            .order("name", { ascending: true });
+      
+          if (error) throw error;
+      
+          renderAdminRecipients(data || []);
+      
+          $("adminRecipientsMessage").textContent =
+            `${data?.length || 0} ontvanger(s) gevonden.`;
+      
+        } catch (error) {
+          console.error("RECIPIENT LIST ERROR:", error);
+      
+          $("adminRecipientsMessage").textContent =
+            "E-mailontvangers konden niet worden geladen.";
+        }
+      }
         async function loadAdminUsers() {
           if (!isAdmin) return;
           $("adminUsersMessage").textContent = "Gebruikers laden…";
@@ -2967,9 +3043,11 @@
           await loadAdminUsers();
         };
         
-        $("manageRecipientsBtn").onclick = () => {
+        $("manageRecipientsBtn").onclick = async () => {
           show("adminRecipients");
+          await loadAdminRecipients();
         };
+
         
         $("adminHomeBtn").onclick = () => show("home");
         
@@ -2977,6 +3055,7 @@
         
         $("recipientsBackBtn").onclick = () => show("admin");
         $("refreshUsersBtn").onclick = loadAdminUsers;
+        $("refreshRecipientsBtn").onclick = loadAdminRecipients;
         $("addUserBtn").onclick = async () => {
           const email = prompt("E-mailadres van de nieuwe gebruiker:");
           if (!email) return;
