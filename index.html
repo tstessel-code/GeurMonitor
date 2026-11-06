@@ -954,7 +954,30 @@
           </div>
           <p id="adminUsersMessage" class="muted adminMessage"></p>
           <div id="adminUsersList"></div>
-          <button id="adminBackBtn" class="btn secondary" type="button">Terug</button>
+          
+          <div class="formSection" style="margin-top: 24px;">
+            <h3 class="formSectionTitle">E-mailontvangers meldingen</h3>
+          
+            <p class="muted">
+              Beheer de adressen waarnaar gebruikers hun geurmelding kunnen e-mailen.
+            </p>
+          
+            <button id="addRecipientBtn" class="btn" type="button">
+              ＋ Ontvanger toevoegen
+            </button>
+          
+            <button id="refreshRecipientsBtn" class="btn secondary" type="button">
+              ↻ Ontvangers vernieuwen
+            </button>
+          
+            <p id="adminRecipientsMessage" class="muted adminMessage"></p>
+          
+            <div id="adminRecipientsList"></div>
+          </div>
+          
+          <button id="adminBackBtn" class="btn secondary" type="button">
+            Terug
+          </button>
         </div>
       </section>
       <section id="dashboard" class="hidden">
@@ -969,6 +992,51 @@
         </div>
       </section>
     </main>
+    <div id="recipientModal" class="gmModal hidden">
+      <div class="gmModalCard">
+        <h2 id="recipientModalTitle">Ontvanger toevoegen</h2>
+    
+        <label for="recipientName">Naam</label>
+        <input
+          id="recipientName"
+          type="text"
+          maxlength="100"
+          placeholder="Bijvoorbeeld: Gemeente Boutersem"
+        />
+    
+        <label for="recipientEmail">E-mailadres</label>
+        <input
+          id="recipientEmail"
+          type="email"
+          maxlength="254"
+          autocomplete="off"
+          placeholder="naam@organisatie.be"
+        />
+    
+        <label for="recipientType">Type ontvanger</label>
+        <select id="recipientType">
+          <option value="to">Aan</option>
+          <option value="cc">CC</option>
+          <option value="bcc">BCC</option>
+        </select>
+    
+        <label for="recipientActive">Status</label>
+        <select id="recipientActive">
+          <option value="true">Actief</option>
+          <option value="false">Niet actief</option>
+        </select>
+    
+        <button id="saveRecipientBtn" class="btn" type="button">
+          Opslaan
+        </button>
+    
+        <button id="cancelRecipientBtn" class="btn secondary" type="button">
+          Annuleren
+        </button>
+    
+        <p id="recipientModalMessage" class="muted"></p>
+      </div>
+    </div>
     <div id="emailSenderModal" class="gmModal hidden">
       <div class="gmModalCard">
         <h2>Controleer uw e-mail</h2>
