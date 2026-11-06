@@ -1550,7 +1550,11 @@
       
         } catch (err) {
           console.error("Fout bij ophalen e-mailadressen:", err);
-          alert("De e-mailadressen konden niet worden opgehaald.");
+        
+          alert(
+            "Supabase fout:\n\n" +
+            (err?.message || JSON.stringify(err, null, 2))
+          );
         }
       };
       $("gps").onclick = () => {
