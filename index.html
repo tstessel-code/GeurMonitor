@@ -2990,6 +2990,13 @@
                 data-id="${recipient.id}">
                 Bewerken
               </button>
+            
+              <button
+                class="btn secondary deleteRecipientBtn"
+                type="button"
+                data-id="${recipient.id}">
+                Verwijderen
+              </button>
             </div>
           `;
       
@@ -3010,7 +3017,36 @@
           
             $("recipientModal").classList.remove("hidden");
           };
-
+          card.querySelector(".deleteRecipientBtn").onclick = async () => {
+            const confirmed = confirm(
+              `Weet u zeker dat u "${recipient.name}" wilt verwijderen?\n\n` +
+              `${recipient.email}\n\n` +
+              `Deze actie kan niet ongedaan worden gemaakt.`
+            );
+          
+            if (!confirmed) return;
+          
+            $("adminRecipientsMessage").textContent =
+              "Ontvanger verwijderen…";
+          
+            try {
+              const { error } = await db
+                .from("email_recipients")
+                .delete()
+                .eq("id", recipient.id);
+          
+              if (error) throw error;
+          
+              await loadAdminRecipients();
+          
+            } catch (error) {
+              console.error("RECIPIENT DELETE ERROR:", error);
+          
+              $("adminRecipientsMessage").textContent =
+                error.message ||
+                "De ontvanger kon niet worden verwijderd.";
+            }
+          };
         });
       }
       async function loadAdminRecipients() {
