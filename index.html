@@ -1539,20 +1539,54 @@
             return;
           }
       
-          const adressen = data
-            .map(item => `${item.name}: ${item.email} (${item.recipient_type})`)
-            .join("\n");
+          const to = data
+            .filter(item => item.recipient_type === "to")
+            .map(item => item.email);
       
-          alert(
-            "Test v0.62 - ontvangers opgehaald uit Supabase:\n\n" +
-            adressen
-          );
+          const cc = data
+            .filter(item => item.recipient_type === "cc")
+            .map(item => item.email);
+      
+          const bcc = data
+            .filter(item => item.recipient_type === "bcc")
+            .map(item => item.email);
+      
+          if (to.length === 0) {
+            alert("Geen actieve hoofdontvangers gevonden.");
+            return;
+          }
+      
+          const subject = "TEST GeurMonitor - geurmelding";
+      
+          const body =
+      `Dit is een testbericht vanuit GeurMonitor.
+      
+      De definitieve inhoud van de geurmelding wordt later toegevoegd.
+      
+      Dit bericht werd opgesteld vanuit GeurMonitor v0.62.`;
+      
+          let mailto =
+            "mailto:" + encodeURIComponent(to.join(",")) +
+            "?subject=" + encodeURIComponent(subject) +
+            "&body=" + encodeURIComponent(body);
+      
+          if (cc.length > 0) {
+            mailto += "&cc=" + encodeURIComponent(cc.join(","));
+          }
+      
+          if (bcc.length > 0) {
+            mailto += "&bcc=" + encodeURIComponent(bcc.join(","));
+          }
+      
+          show("reports");
+      
+          window.location.href = mailto;
       
         } catch (err) {
-          console.error("Fout bij ophalen e-mailadressen:", err);
-        
+          console.error("Fout bij voorbereiden e-mail:", err);
+      
           alert(
-            "Supabase fout:\n\n" +
+            "De e-mail kon niet worden voorbereid:\n\n" +
             (err?.message || JSON.stringify(err, null, 2))
           );
         }
