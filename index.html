@@ -646,7 +646,7 @@
             👤 Mijn profiel
           </button>
           <button id="adminUsersBtn" class="btn secondary hidden" type="button">
-            👥 Gebruikersbeheer
+            ⚙️ Beheer
           </button>
           <button id="logoutBtn" class="btn secondary" type="button">
             Uitloggen
@@ -940,6 +940,27 @@
           <button id="profileBackBtn" class="btn secondary" type="button">Terug naar Home</button>
         </div>
       </section>
+      <section id="admin" class="hidden">
+        <div class="card">
+          <h2>Beheer</h2>
+      
+          <p class="muted">
+            Alleen beschikbaar voor beheerders.
+          </p>
+      
+          <button id="manageUsersBtn" class="btn" type="button">
+            👥 Gebruikersbeheer
+          </button>
+      
+          <button id="manageRecipientsBtn" class="btn secondary" type="button">
+            ✉️ E-mailontvangers
+          </button>
+      
+          <button id="adminHomeBtn" class="btn secondary" type="button">
+            Terug naar Home
+          </button>
+        </div>
+      </section>
       <section id="adminUsers" class="hidden">
         <div class="card">
           <div class="topline">
@@ -955,29 +976,45 @@
           <p id="adminUsersMessage" class="muted adminMessage"></p>
           <div id="adminUsersList"></div>
           
-          <div class="formSection" style="margin-top: 24px;">
-            <h3 class="formSectionTitle">E-mailontvangers meldingen</h3>
-          
-            <p class="muted">
-              Beheer de adressen waarnaar gebruikers hun geurmelding kunnen e-mailen.
-            </p>
-          
-            <button id="addRecipientBtn" class="btn" type="button">
-              ＋ Ontvanger toevoegen
-            </button>
-          
-            <button id="refreshRecipientsBtn" class="btn secondary" type="button">
-              ↻ Ontvangers vernieuwen
-            </button>
-          
-            <p id="adminRecipientsMessage" class="muted adminMessage"></p>
-          
-            <div id="adminRecipientsList"></div>
-          </div>
-          
           <button id="adminBackBtn" class="btn secondary" type="button">
             Terug
           </button>
+        </div>
+      </section>
+      <section id="adminRecipients" class="hidden">
+        <div class="card">
+      
+          <div class="topline">
+            <div>
+              <h2 style="margin-bottom:4px">E-mailontvangers</h2>
+              <p class="muted" style="margin-top:0">
+                Alleen beschikbaar voor beheerders.
+              </p>
+            </div>
+          </div>
+      
+          <p class="muted">
+            Beheer de adressen waarnaar gebruikers hun geurmelding kunnen e-mailen.
+          </p>
+      
+          <div class="adminToolbar">
+            <button id="addRecipientBtn" class="btn" type="button">
+              ＋ Ontvanger toevoegen
+            </button>
+      
+            <button id="refreshRecipientsBtn" class="btn secondary" type="button">
+              ↻ Vernieuwen
+            </button>
+          </div>
+      
+          <p id="adminRecipientsMessage" class="muted adminMessage"></p>
+      
+          <div id="adminRecipientsList"></div>
+      
+          <button id="recipientsBackBtn" class="btn secondary" type="button">
+            Terug
+          </button>
+      
         </div>
       </section>
       <section id="dashboard" class="hidden">
@@ -2923,8 +2960,22 @@
             $("adminUsersMessage").textContent = error.message || "De actie is mislukt.";
           }
         }
-        $("adminUsersBtn").onclick = async () => { show("adminUsers"); await loadAdminUsers(); };
-        $("adminBackBtn").onclick = () => show("home");
+        $("adminUsersBtn").onclick = () => show("admin");
+        
+        $("manageUsersBtn").onclick = async () => {
+          show("adminUsers");
+          await loadAdminUsers();
+        };
+        
+        $("manageRecipientsBtn").onclick = () => {
+          show("adminRecipients");
+        };
+        
+        $("adminHomeBtn").onclick = () => show("home");
+        
+        $("adminBackBtn").onclick = () => show("admin");
+        
+        $("recipientsBackBtn").onclick = () => show("admin");
         $("refreshUsersBtn").onclick = loadAdminUsers;
         $("addUserBtn").onclick = async () => {
           const email = prompt("E-mailadres van de nieuwe gebruiker:");
