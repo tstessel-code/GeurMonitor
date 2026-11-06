@@ -1203,6 +1203,7 @@
       let locationMarker = null;
       let pendingMailto = null;
       let pendingMailtoWithoutLocation = null;
+      let editingRecipientId = null;
       const $ = (id) => document.getElementById(id);
       const storageKey = () =>
         currentUser ? `geurmonitor:${currentUser.id}` : "geurmonitor:guest";
@@ -3055,7 +3056,79 @@
         
         $("recipientsBackBtn").onclick = () => show("admin");
         $("refreshUsersBtn").onclick = loadAdminUsers;
+        
         $("refreshRecipientsBtn").onclick = loadAdminRecipients;
+        
+        $("addRecipientBtn").onclick = () => {
+          editingRecipientId = null;
+        
+          $("recipientModalTitle").textContent = "Ontvanger toevoegen";
+          $("recipientName").value = "";
+          $("recipientEmail").value = "";
+          $("recipientType").value = "to";
+          $("recipientActive").value = "true";
+          $("recipientModalMessage").textContent = "";
+        
+          $("recipientModal").classList.remove("hidden");
+        };
+        $("cancelRecipientBtn").onclick = () => {
+          $("recipientModal").classList.add("hidden");
+          $("recipientModalMessage").textContent = "";
+          editingRecipientId = null;
+        };
+        
+        $("saveRecipientBtn").onclick = async () => {
+          if (!isAdmin || !db) return;
+        
+          const name = $("recipientName").value.trim();
+          const email = $("recipientEmail").value.trim();
+          const recipientType = $("recipientType").value;
+          const isActive = $("recipientActive").value === "true";
+        
+          if (!name) {
+            $("recipientModalMessage").textContent =
+              "Vul een naam in.";
+            return;
+          }
+        
+          if (!email || !$("recipientEmail").checkValidity()) {
+            $("recipientModalMessage").textContent =
+              "Vul een geldig e-mailadres in.";
+            return;
+          }
+        
+          $("saveRecipientBtn").disabled = true;
+          $("recipientModalMessage").textContent =
+            "Ontvanger opslaan…";
+        
+          try {
+            const { error } = await db
+              .from("email_recipients")
+              .insert({
+                name: name,
+                email: email,
+                recipient_type: recipientType,
+                is_active: isActive,
+                environment: "test"
+              });
+        
+            if (error) throw error;
+        
+            $("recipientModal").classList.add("hidden");
+            $("recipientModalMessage").textContent = "";
+        
+            await loadAdminRecipients();
+        
+          } catch (error) {
+            console.error("RECIPIENT INSERT ERROR:", error);
+        
+            $("recipientModalMessage").textContent =
+              error.message || "De ontvanger kon niet worden opgeslagen.";
+        
+          } finally {
+            $("saveRecipientBtn").disabled = false;
+          }
+        };
         $("addUserBtn").onclick = async () => {
           const email = prompt("E-mailadres van de nieuwe gebruiker:");
           if (!email) return;
