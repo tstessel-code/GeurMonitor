@@ -969,6 +969,25 @@
         </div>
       </section>
     </main>
+    <div id="emailSenderModal" class="gmModal hidden">
+      <div class="gmModalCard">
+        <h2>Controleer uw afzenderadres</h2>
+    
+        <p>
+          Gebruikt u meerdere e-mailaccounts op dit toestel?
+          Controleer vóór het verzenden of bij <b>Van:</b>
+          het juiste e-mailadres geselecteerd staat.
+        </p>
+    
+        <button id="openEmailBtn" class="btn" type="button">
+          ✉️ E-mail openen
+        </button>
+    
+        <button id="cancelEmailBtn" class="btn secondary" type="button">
+          Annuleren
+        </button>
+      </div>
+    </div>
     <div id="reportMapModal" class="gmModal hidden">
       <div class="gmModalCard">
         <h2>Windrichting bij melding</h2>
@@ -1071,6 +1090,7 @@
 
       let locationMap = null;
       let locationMarker = null;
+      let pendingMailto = null;
       const $ = (id) => document.getElementById(id);
       const storageKey = () =>
         currentUser ? `geurmonitor:${currentUser.id}` : "geurmonitor:guest";
@@ -1610,9 +1630,8 @@
             mailto += "&bcc=" + encodeURIComponent(bcc.join(","));
           }
       
-          show("reports");
-      
-          window.location.href = mailto;
+          pendingMailto = mailto;
+          $("emailSenderModal").classList.remove("hidden");
       
         } catch (err) {
           console.error("Fout bij voorbereiden e-mail:", err);
@@ -1646,6 +1665,22 @@
           },
           { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
         );
+      };
+      $("cancelEmailBtn").onclick = () => {
+        $("emailSenderModal").classList.add("hidden");
+        pendingMailto = null;
+      };
+      
+      $("openEmailBtn").onclick = () => {
+        if (!pendingMailto) return;
+      
+        const mailto = pendingMailto;
+        pendingMailto = null;
+      
+        $("emailSenderModal").classList.add("hidden");
+      
+        show("reports");
+        window.location.href = mailto;
       };
       $("openMapBtn").onclick = () => {
         $("mapPickerBox").classList.remove("hidden");
