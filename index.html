@@ -2202,6 +2202,53 @@
           windDirection,
           350
         );
+
+        // Hoofdlijn: van de windrichting naar de waarnemingslocatie
+        reportWindLayer = L.polyline(
+          [windOrigin, locationPoint],
+          {
+            color: "#0f766e",
+            weight: 3,
+            opacity: 0.9,
+            lineCap: "round",
+            lineJoin: "round"
+          }
+        ).addTo(reportWindMap);
+        
+        
+        // Geïntegreerde pijlpunt exact op de waarnemingslocatie
+        // Beide benen wijzen vanaf de waarnemingslocatie terug langs de lijn.
+        const arrowLength = 30;   // lengte van de pijlpunt in meter
+        const arrowAngle = 28;    // openingshoek van de pijlpunt
+        
+        const arrowLeft = destinationPoint(
+          lat,
+          lon,
+          windDirection - arrowAngle,
+          arrowLength
+        );
+        
+        const arrowRight = destinationPoint(
+          lat,
+          lon,
+          windDirection + arrowAngle,
+          arrowLength
+        );
+        
+        L.polyline(
+          [
+            arrowLeft,
+            locationPoint,
+            arrowRight
+          ],
+          {
+            color: "#0f766e",
+            weight: 3,
+            opacity: 0.9,
+            lineCap: "round",
+            lineJoin: "round"
+          }
+        ).addTo(reportWindMap);
       
         reportWindLayer = L.polyline(
           [windOrigin, locationPoint],
@@ -2229,27 +2276,7 @@
             iconSize: null,
           }),
         }).addTo(reportWindMap);
-      
-        // Verfijnde pijlpunt: toont waar de wind naartoe waait.
-        const arrowIcon = L.divIcon({
-          className: "",
-          html: `<div style="
-            color:#0f766e;
-            font-size:24px;
-            font-weight:700;
-            line-height:24px;
-            transform:rotate(${windDirection}deg);
-            transform-origin:center;
-          ">↓</div>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12],
-        });
-      
-        L.marker(locationPoint, {
-          interactive: false,
-          icon: arrowIcon,
-        }).addTo(reportWindMap);
-      
+          
         const bounds = L.latLngBounds([
           windOrigin,
           locationPoint
