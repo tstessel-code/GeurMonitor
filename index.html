@@ -2098,6 +2098,21 @@
       }
       let reportWindMap = null;
       let reportWindLayer = null;
+
+      function fullWindDirection(compass) {
+        const directions = {
+          N: "noorden",
+          NO: "noordoosten",
+          O: "oosten",
+          ZO: "zuidoosten",
+          Z: "zuiden",
+          ZW: "zuidwesten",
+          W: "westen",
+          NW: "noordwesten"
+        };
+      
+        return directions[compass] || compass || "";
+      }
       
       function destinationPoint(lat, lon, bearingDeg, distanceMeters) {
         const earthRadius = 6371000;
@@ -2188,20 +2203,12 @@
           350
         );
       
-        L.circleMarker(locationPoint, {
-          radius: 8,
-          color: "#ffffff",
-          weight: 3,
-          fillColor: "#0f766e",
-          fillOpacity: 1,
-        }).addTo(reportWindMap);
-      
         reportWindLayer = L.polyline(
           [windOrigin, locationPoint],
           {
             color: "#0f766e",
-            weight: 5,
-            opacity: 0.95,
+            weight: 3,
+            opacity: 0.9,
           }
         ).addTo(reportWindMap);
       
@@ -2223,19 +2230,19 @@
           }),
         }).addTo(reportWindMap);
       
-        // Pijlpunt aan de kant van de waarnemingslocatie.
+        // Verfijnde pijlpunt: toont waar de wind naartoe waait.
         const arrowIcon = L.divIcon({
           className: "",
           html: `<div style="
             color:#0f766e;
-            font-size:30px;
-            font-weight:900;
-            line-height:30px;
+            font-size:24px;
+            font-weight:700;
+            line-height:24px;
             transform:rotate(${windDirection}deg);
             transform-origin:center;
           ">↓</div>`,
-          iconSize: [30, 30],
-          iconAnchor: [15, 15],
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
         });
       
         L.marker(locationPoint, {
@@ -2254,15 +2261,19 @@
           reportWindMap.invalidateSize();
         }, 50);
       
-        const compass =
-          report.windDirectionCompass
-            ? ` uit ${report.windDirectionCompass}`
-            : "";
-      
+        const directionName =
+          fullWindDirection(report.windDirectionCompass);
+        
         $("reportMapMessage").textContent =
-          `Wind${compass} · ${windSpeed.toLocaleString("nl-BE", {
-            maximumFractionDigits: 1
-          })} km/u`;
+          directionName
+            ? `Wind uit het ${directionName} · ${windSpeed.toLocaleString("nl-BE", {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+              })} km/u`
+            : `Wind · ${windSpeed.toLocaleString("nl-BE", {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+              })} km/u`;
       }
       
       $("closeReportMapBtn").onclick = closeReportWindMap;
