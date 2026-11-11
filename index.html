@@ -2784,8 +2784,50 @@
       
           return;
         }
-
-        function renderPersonalCalendar(reports) {
+    
+        chart.innerHTML = "";
+      
+        counts.forEach((count, index) => {
+          const day = index + 1;
+          const percentage = count > 0
+            ? Math.max(6, Math.round((count / maximum) * 82))
+            : 0;
+      
+          const wrap = document.createElement("div");
+          wrap.className = "reportingBarWrap";
+      
+          const value = document.createElement("span");
+          value.className = "reportingBarValue";
+          value.style.setProperty("--bar-height", `${percentage}%`);
+          value.textContent = count > 0 ? count : "";
+      
+          const bar = document.createElement("div");
+          bar.className =
+            "reportingBar" + (count > 0 ? " hasReports" : "");
+          bar.style.height = `${percentage}%`;
+          bar.title =
+            `${day} ${firstDay.toLocaleDateString("nl-BE", {
+              month: "long"
+            })}: ${count} melding(en)`;
+      
+          const label = document.createElement("span");
+          label.className = "reportingBarDay";
+      
+          // Om de grafiek leesbaar te houden tonen we niet alle daglabels.
+          label.textContent =
+            day === 1 ||
+            day === daysInMonth ||
+            day % 5 === 0
+              ? day
+              : "";
+      
+          wrap.appendChild(value);
+          wrap.appendChild(bar);
+          wrap.appendChild(label);
+          chart.appendChild(wrap);
+        });
+      }
+      function renderPersonalCalendar(reports) {
           const calendar = $("personalReportsCalendar");
           const { year, monthIndex } = selectedReportingMonth();
         
@@ -2865,49 +2907,6 @@
             calendar.appendChild(cell);
           }
         }
-      
-        chart.innerHTML = "";
-      
-        counts.forEach((count, index) => {
-          const day = index + 1;
-          const percentage = count > 0
-            ? Math.max(6, Math.round((count / maximum) * 82))
-            : 0;
-      
-          const wrap = document.createElement("div");
-          wrap.className = "reportingBarWrap";
-      
-          const value = document.createElement("span");
-          value.className = "reportingBarValue";
-          value.style.setProperty("--bar-height", `${percentage}%`);
-          value.textContent = count > 0 ? count : "";
-      
-          const bar = document.createElement("div");
-          bar.className =
-            "reportingBar" + (count > 0 ? " hasReports" : "");
-          bar.style.height = `${percentage}%`;
-          bar.title =
-            `${day} ${firstDay.toLocaleDateString("nl-BE", {
-              month: "long"
-            })}: ${count} melding(en)`;
-      
-          const label = document.createElement("span");
-          label.className = "reportingBarDay";
-      
-          // Om de grafiek leesbaar te houden tonen we niet alle daglabels.
-          label.textContent =
-            day === 1 ||
-            day === daysInMonth ||
-            day % 5 === 0
-              ? day
-              : "";
-      
-          wrap.appendChild(value);
-          wrap.appendChild(bar);
-          wrap.appendChild(label);
-          chart.appendChild(wrap);
-        });
-      }
       function render(a = local()) {
         const l = $("list");
 
