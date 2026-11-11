@@ -870,6 +870,122 @@
       .reportingIntensity5 {
         background: #b42318;
       }
+
+      /* v0.64 - Detailoverzicht van geselecteerde kalenderdag */
+
+      .reportingCalendarDay.hasReports {
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      
+      .reportingCalendarDay.hasReports:active {
+        transform: scale(0.97);
+      }
+      
+      .reportingCalendarDay.selected {
+        border-color: #0f766e;
+        background: #e7f1ef;
+        box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+      }
+      
+      .reportingDayDetails {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        margin-top: 16px;
+        padding: 14px;
+        border: 1px solid #dce7e4;
+        border-radius: 14px;
+        box-sizing: border-box;
+        background: #f8fbfa;
+      }
+      
+      .reportingDayDetailsHeader {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      
+      .reportingDayDetailsHeader h3 {
+        margin: 0;
+      }
+      
+      .reportingDayDetailsHeader p {
+        margin: 4px 0 0;
+      }
+      
+      .reportingDayClose {
+        flex: 0 0 36px;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        border: 1px solid #ccd6d3;
+        border-radius: 50%;
+        background: #fff;
+        color: #36534d;
+        font-size: 23px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      
+      .reportingDayItem {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr) auto;
+        gap: 9px;
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+        margin-top: 9px;
+        padding: 11px;
+        border: 1px solid #dce7e4;
+        border-left: 5px solid #999;
+        border-radius: 11px;
+        box-sizing: border-box;
+        background: #fff;
+        color: #17211f;
+        text-align: left;
+        cursor: pointer;
+      }
+      
+      .reportingDayTime {
+        color: #0f5f59;
+        font-size: 14px;
+        font-weight: 800;
+      }
+      
+      .reportingDayInfo {
+        min-width: 0;
+      }
+      
+      .reportingDayIntensity {
+        display: block;
+        font-size: 13px;
+        font-weight: 800;
+      }
+      
+      .reportingDayOdor {
+        display: block;
+        margin-top: 2px;
+        overflow: hidden;
+        color: #526762;
+        font-size: 11px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .reportingDayArrow {
+        color: #0f766e;
+        font-size: 18px;
+        font-weight: 800;
+      }
+      
+      @media (max-width: 400px) {
+        .reportingDayItem {
+          grid-template-columns: 50px minmax(0, 1fr) auto;
+          padding: 10px 8px;
+        }
+      }
       
       @media (max-width: 400px) {
         .reportingSummary {
@@ -1371,6 +1487,26 @@
                 </div>
               
                 <div id="personalReportsCalendar" class="reportingCalendar"></div>
+                <div id="reportingDayDetails" class="reportingDayDetails hidden">
+                  <div class="reportingDayDetailsHeader">
+                    <div>
+                      <h3 id="reportingDayTitle">Waarnemingen</h3>
+                      <p id="reportingDaySummary" class="muted"></p>
+                    </div>
+                
+                    <button
+                      id="closeReportingDayBtn"
+                      class="reportingDayClose"
+                      type="button"
+                      aria-label="Dagoverzicht sluiten"
+                      title="Dagoverzicht sluiten"
+                    >
+                      ×
+                    </button>
+                  </div>
+                
+                  <div id="reportingDayList"></div>
+                </div>
               </div>
             </div>
           </div>
@@ -2839,6 +2975,7 @@
           const { year, monthIndex } = selectedReportingMonth();
         
           calendar.innerHTML = "";
+          closeReportingDayDetails();
         
           const firstDay = new Date(year, monthIndex, 1);
           const daysInMonth =
@@ -2868,12 +3005,28 @@
                 date.getDate() === day
               );
             });
-        
+
             const cell = document.createElement("div");
             cell.className = "reportingCalendarDay";
         
             if (dayReports.length > 0) {
               cell.classList.add("hasReports");
+              cell.setAttribute(
+                "aria-label",
+                `${dayReports.length} waarneming(en) op dag ${day}`
+              );
+            
+              cell.onclick = () => {
+                document
+                  .querySelectorAll(".reportingCalendarDay.selected")
+                  .forEach((otherCell) =>
+                    otherCell.classList.remove("selected")
+                  );
+            
+                cell.classList.add("selected");
+            
+                renderReportingDayDetails(day, reports);
+              };
             }
         
             const number = document.createElement("span");
@@ -2911,6 +3064,113 @@
             calendar.appendChild(cell);
           }
         }
+
+      function renderReportingDayDetails(day, reports) {
+        const { year, monthIndex } = selectedReportingMonth();
+      
+        const dayReports = reports
+          .filter((report) => {
+            const date = new Date(report.ts);
+      
+            return (
+              date.getFullYear() === year &&
+              date.getMonth() === monthIndex &&
+              date.getDate() === day
+            );
+          })
+          .sort(
+            (a, b) =>
+              new Date(a.ts) - new Date(b.ts)
+          );
+      
+        if (dayReports.length === 0) {
+          closeReportingDayDetails();
+          return;
+        }
+      
+        const selectedDate =
+          new Date(year, monthIndex, day);
+      
+        $("reportingDayTitle").textContent =
+          selectedDate.toLocaleDateString("nl-BE", {
+            day: "numeric",
+            month: "long",
+            year: "numeric"
+          });
+      
+        $("reportingDaySummary").textContent =
+          dayReports.length === 1
+            ? "1 eigen waarneming"
+            : `${dayReports.length} eigen waarnemingen`;
+      
+        const list = $("reportingDayList");
+        list.innerHTML = "";
+      
+        dayReports.forEach((report) => {
+          const date = new Date(report.ts);
+      
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "reportingDayItem";
+      
+          item.style.borderLeftColor =
+            D[report.intensity]?.[1] || "#999";
+      
+          const time = date.toLocaleTimeString("nl-BE", {
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+      
+          item.innerHTML = `
+            <span class="reportingDayTime">
+              ${esc(time)}
+            </span>
+      
+            <span class="reportingDayInfo">
+              <span class="reportingDayIntensity">
+                ${esc(report.label || "Onbekende intensiteit")}
+              </span>
+      
+              <span class="reportingDayOdor">
+                ${esc(report.odor || "Geen geurtype opgegeven")}
+              </span>
+            </span>
+      
+            <span class="reportingDayArrow" aria-hidden="true">
+              ›
+            </span>
+          `;
+      
+          item.onclick = async () => {
+            await openReportWindMap(report.id);
+          };
+      
+          list.appendChild(item);
+        });
+      
+        $("reportingDayDetails").classList.remove("hidden");
+      
+        requestAnimationFrame(() => {
+          $("reportingDayDetails").scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+          });
+        });
+      }
+      
+      function closeReportingDayDetails() {
+        $("reportingDayDetails").classList.add("hidden");
+        $("reportingDayList").innerHTML = "";
+        $("reportingDayTitle").textContent = "Waarnemingen";
+        $("reportingDaySummary").textContent = "";
+      
+        document
+          .querySelectorAll(".reportingCalendarDay.selected")
+          .forEach((cell) =>
+            cell.classList.remove("selected")
+          );
+      }
+      
       function render(a = local()) {
         const l = $("list");
 
@@ -3848,7 +4108,9 @@
           if (!email) return;
           await runAdminAction("invite", { email: email.trim() });
         };
-      $("personalReportingTab").onclick = () => {
+        $("closeReportingDayBtn").onclick =
+          closeReportingDayDetails;
+        $("personalReportingTab").onclick = () => {
         $("personalReportingTab").classList.add("active");
         $("generalReportingTab").classList.remove("active");
       
@@ -3867,6 +4129,7 @@
       };
       
       $("reportingMonthPicker").onchange = () => {
+        closeReportingDayDetails();
         renderPersonalReporting();
       };
       $("sync").onclick = syncAll;
