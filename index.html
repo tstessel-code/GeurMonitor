@@ -597,6 +597,148 @@
       .userActions .btn { margin:0; padding:10px; font-size:13px; }
       .danger { background:#c62828; color:#fff; }
       .adminMessage { margin:10px 0; }
+      /* v0.64 - Reporting */
+      .reportingTabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin: 14px 0;
+      }
+      
+      .reportingTab {
+        padding: 12px 8px;
+        border: 2px solid #d4dfdc;
+        border-radius: 12px;
+        background: #fff;
+        color: #36534d;
+        font-weight: 800;
+      }
+      
+      .reportingTab.active {
+        border-color: #0f766e;
+        background: #e7f1ef;
+        color: #0f5f59;
+      }
+      
+      .reportingSummary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 14px;
+      }
+      
+      .reportingStat {
+        min-width: 0;
+        padding: 12px 6px;
+        border-radius: 12px;
+        background: #f4f8f7;
+        text-align: center;
+      }
+      
+      .reportingStat b {
+        display: block;
+        color: #0f766e;
+        font-size: 24px;
+      }
+      
+      .reportingStat span {
+        display: block;
+        margin-top: 3px;
+        color: #4d5f5b;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      
+      .reportingSection {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid #dce7e4;
+      }
+      
+      .reportingSection h3 {
+        margin: 0 0 4px;
+        color: #0f5f59;
+        font-size: 17px;
+      }
+      
+      .reportingPeriod {
+        margin-top: 12px;
+      }
+      
+      .reportingChart {
+        display: flex;
+        align-items: flex-end;
+        gap: 4px;
+        width: 100%;
+        height: 190px;
+        margin-top: 16px;
+        padding: 12px 8px 26px;
+        border-left: 1px solid #ccd6d3;
+        border-bottom: 1px solid #ccd6d3;
+        overflow-x: auto;
+      }
+      
+      .reportingBarWrap {
+        position: relative;
+        display: flex;
+        flex: 0 0 18px;
+        align-items: flex-end;
+        justify-content: center;
+        height: 100%;
+      }
+      
+      .reportingBar {
+        width: 12px;
+        min-height: 0;
+        border-radius: 5px 5px 0 0;
+        background: #0f766e;
+      }
+      
+      .reportingBar.hasReports {
+        min-height: 6px;
+      }
+      
+      .reportingBarValue {
+        position: absolute;
+        bottom: calc(var(--bar-height) + 3px);
+        color: #0f5f59;
+        font-size: 10px;
+        font-weight: 800;
+      }
+      
+      .reportingBarDay {
+        position: absolute;
+        bottom: -20px;
+        color: #61706d;
+        font-size: 9px;
+      }
+      
+      .reportingEmpty {
+        width: 100%;
+        align-self: center;
+        color: #61706d;
+        font-size: 13px;
+        text-align: center;
+      }
+      
+      .reportingPrivacy {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #eef7f5;
+        color: #36534d;
+        font-size: 12px;
+      }
+      
+      @media (max-width: 400px) {
+        .reportingSummary {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+      
+        .reportingStat b {
+          font-size: 21px;
+        }
+      }
     </style>
   </head>
   <body class="app-loading">
@@ -1019,15 +1161,75 @@
       </section>
       <section id="dashboard" class="hidden">
         <div class="card">
-          <h2>Dashboard</h2>
-          <div class="stats">
-            <div class="stat"><b id="today">0</b>Vandaag</div>
-            <div class="stat"><b id="week">0</b>7 dagen</div>
-            <div class="stat"><b id="max">–</b>Hoogste</div>
-            <div class="stat"><b id="common">–</b>Meest gemeld</div>
+          <h2>Reporting</h2>
+      
+          <p class="muted">
+            Bekijk de evolutie en spreiding van de geregistreerde geurhinder.
+          </p>
+      
+          <div class="reportingTabs">
+            <button
+              id="personalReportingTab"
+              class="reportingTab active"
+              type="button"
+            >
+              👤 Mijn waarnemingen
+            </button>
+      
+            <button
+              id="generalReportingTab"
+              class="reportingTab"
+              type="button"
+            >
+              🌍 Algemeen
+            </button>
+          </div>
+      
+          <div id="personalReporting">
+            <div class="reportingSummary">
+              <div class="reportingStat">
+                <b id="reportingToday">0</b>
+                <span>Vandaag</span>
+              </div>
+      
+              <div class="reportingStat">
+                <b id="reportingWeek">0</b>
+                <span>Deze week</span>
+              </div>
+      
+              <div class="reportingStat">
+                <b id="reportingMonth">0</b>
+                <span>Deze maand</span>
+              </div>
+            </div>
+      
+            <div class="reportingSection">
+              <h3>Meldingen per dag</h3>
+      
+              <p id="reportingMonthLabel" class="muted"></p>
+      
+              <div class="reportingPeriod">
+                <label for="reportingMonthPicker">Maand</label>
+                <input id="reportingMonthPicker" type="month" />
+              </div>
+      
+              <div id="personalReportsChart" class="reportingChart"></div>
+            </div>
+          </div>
+      
+          <div id="generalReporting" class="hidden">
+            <div class="reportingPrivacy">
+              In de algemene reporting worden uitsluitend gegroepeerde gegevens
+              opgenomen. Namen, opmerkingen en exacte locaties worden niet getoond.
+            </div>
+      
+            <p class="muted" style="margin-top: 16px;">
+              De algemene reporting wordt in een volgende stap geactiveerd.
+            </p>
           </div>
         </div>
       </section>
+
     </main>
     <div id="recipientModal" class="gmModal hidden">
       <div class="gmModalCard">
@@ -2035,6 +2237,10 @@
         }
 
         render(a);
+
+        if (!$("dashboard").classList.contains("hidden")) {
+          renderPersonalReporting();
+        }
       }
       function formatDuration(startValue, endValue) {
         const start = new Date(startValue);
@@ -2304,6 +2510,178 @@
       }
       
       $("closeReportMapBtn").onclick = closeReportWindMap;
+      function startOfLocalDay(date = new Date()) {
+        return new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate()
+        );
+      }
+      
+      function startOfCurrentWeek(date = new Date()) {
+        const result = startOfLocalDay(date);
+      
+        // JavaScript: zondag = 0. Voor Belgische weekindeling begint de week maandag.
+        const day = result.getDay();
+        const daysSinceMonday = day === 0 ? 6 : day - 1;
+      
+        result.setDate(result.getDate() - daysSinceMonday);
+      
+        return result;
+      }
+      
+      function personalReports() {
+        if (!currentUser) return [];
+      
+        return local().filter(
+          (report) => report.userId === currentUser.id
+        );
+      }
+      
+      function selectedReportingMonth() {
+        const value = $("reportingMonthPicker").value;
+      
+        if (!value) {
+          const now = new Date();
+      
+          return {
+            year: now.getFullYear(),
+            monthIndex: now.getMonth()
+          };
+        }
+      
+        const [year, month] = value.split("-").map(Number);
+      
+        return {
+          year: year,
+          monthIndex: month - 1
+        };
+      }
+      
+      function renderPersonalReporting() {
+        const reports = personalReports();
+        const now = new Date();
+      
+        const todayStart = startOfLocalDay(now);
+        const tomorrowStart = new Date(todayStart);
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+      
+        const weekStart = startOfCurrentWeek(now);
+        const nextWeekStart = new Date(weekStart);
+        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
+      
+        const monthStart = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          1
+        );
+      
+        const nextMonthStart = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          1
+        );
+      
+        $("reportingToday").textContent = reports.filter((report) => {
+          const date = new Date(report.ts);
+      
+          return date >= todayStart && date < tomorrowStart;
+        }).length;
+      
+        $("reportingWeek").textContent = reports.filter((report) => {
+          const date = new Date(report.ts);
+      
+          return date >= weekStart && date < nextWeekStart;
+        }).length;
+      
+        $("reportingMonth").textContent = reports.filter((report) => {
+          const date = new Date(report.ts);
+      
+          return date >= monthStart && date < nextMonthStart;
+        }).length;
+      
+        renderPersonalMonthChart(reports);
+      }
+      
+      function renderPersonalMonthChart(reports) {
+        const chart = $("personalReportsChart");
+        const { year, monthIndex } = selectedReportingMonth();
+      
+        const firstDay = new Date(year, monthIndex, 1);
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+      
+        $("reportingMonthLabel").textContent =
+          firstDay.toLocaleDateString("nl-BE", {
+            month: "long",
+            year: "numeric"
+          });
+      
+        const counts = Array(daysInMonth).fill(0);
+      
+        reports.forEach((report) => {
+          const date = new Date(report.ts);
+      
+          if (
+            date.getFullYear() === year &&
+            date.getMonth() === monthIndex
+          ) {
+            counts[date.getDate() - 1] += 1;
+          }
+        });
+      
+        const maximum = Math.max(...counts, 0);
+      
+        if (maximum === 0) {
+          chart.innerHTML =
+            '<div class="reportingEmpty">' +
+            'Geen eigen waarnemingen in deze maand.' +
+            '</div>';
+      
+          return;
+        }
+      
+        chart.innerHTML = "";
+      
+        counts.forEach((count, index) => {
+          const day = index + 1;
+          const percentage = count > 0
+            ? Math.max(6, Math.round((count / maximum) * 100))
+            : 0;
+      
+          const wrap = document.createElement("div");
+          wrap.className = "reportingBarWrap";
+      
+          const value = document.createElement("span");
+          value.className = "reportingBarValue";
+          value.style.setProperty("--bar-height", `${percentage}%`);
+          value.textContent = count > 0 ? count : "";
+      
+          const bar = document.createElement("div");
+          bar.className =
+            "reportingBar" + (count > 0 ? " hasReports" : "");
+          bar.style.height = `${percentage}%`;
+          bar.title =
+            `${day} ${firstDay.toLocaleDateString("nl-BE", {
+              month: "long"
+            })}: ${count} melding(en)`;
+      
+          const label = document.createElement("span");
+          label.className = "reportingBarDay";
+      
+          // Om de grafiek leesbaar te houden tonen we niet alle daglabels.
+          label.textContent =
+            day === 1 ||
+            day === daysInMonth ||
+            day % 5 === 0
+              ? day
+              : "";
+      
+          wrap.appendChild(value);
+          wrap.appendChild(bar);
+          wrap.appendChild(label);
+          chart.appendChild(wrap);
+        });
+      }
       function render(a = local()) {
         const l = $("list");
 
@@ -2402,30 +2780,7 @@
 
           l.appendChild(e);
         });
-
-        const now = new Date();
-
-        $("today").textContent = a.filter(
-          (x) => new Date(x.ts).toDateString() === now.toDateString(),
-        ).length;
-
-        $("week").textContent = a.filter(
-          (x) => now - new Date(x.ts) <= 7 * 864e5,
-        ).length;
-
-        $("max").textContent = a.length
-          ? D[Math.max(...a.map((x) => x.intensity))][0]
-          : "–";
-
-        const c = {};
-
-        a.forEach((x) => {
-          if (x.odor) c[x.odor] = (c[x.odor] || 0) + 1;
-        });
-
-        $("common").textContent =
-          Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || "–";
-
+        
         document.querySelectorAll("[data-end-report]").forEach((button) => {
           button.onclick = () => {
             openEndTimeEditor(button.dataset.endReport);
@@ -3264,10 +3619,35 @@
           if (!email) return;
           await runAdminAction("invite", { email: email.trim() });
         };
+      $("personalReportingTab").onclick = () => {
+        $("personalReportingTab").classList.add("active");
+        $("generalReportingTab").classList.remove("active");
+      
+        $("personalReporting").classList.remove("hidden");
+        $("generalReporting").classList.add("hidden");
+      
+        renderPersonalReporting();
+      };
+      
+      $("generalReportingTab").onclick = () => {
+        $("generalReportingTab").classList.add("active");
+        $("personalReportingTab").classList.remove("active");
+      
+        $("generalReporting").classList.remove("hidden");
+        $("personalReporting").classList.add("hidden");
+      };
+      
+      $("reportingMonthPicker").onchange = () => {
+        renderPersonalReporting();
+      };
       $("sync").onclick = syncAll;
       document
         .querySelectorAll(".nav button")
         .forEach((b) => (b.onclick = () => show(b.dataset.page)));
+      const reportingNow = new Date();
+
+      $("reportingMonthPicker").value =
+        `${reportingNow.getFullYear()}-${pad(reportingNow.getMonth() + 1)}`;
       reset("now");
       render();
       if ("serviceWorker" in navigator)
