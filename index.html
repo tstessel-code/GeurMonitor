@@ -1695,6 +1695,41 @@
         lon: 4.8107,
       };
 
+      // ============================================================
+      // 5 HA HEXAGOONZONES - VISUELE TEST
+      // ============================================================
+      
+      // Tijdelijk rasteranker.
+      // Later vervangen door een definitief vast referentiepunt.
+      const HEX_ORIGIN = {
+        lat: NEERVELP_CHURCH.lat,
+        lon: NEERVELP_CHURCH.lon,
+      };
+      
+      const HEX_CONFIG = {
+        modelId: "GGP_HEX_5HA_V1",
+        areaM2: 50000,
+        displayRadiusM: 1200,
+        borderColor: "#0f766e",
+        fillColor: "#5fb3a7",
+        selectedBorderColor: "#d97706",
+        selectedFillColor: "#f59e0b",
+      };
+      
+      // Oppervlakte regelmatige zeshoek:
+      // A = 3 × √3 / 2 × zijde²
+      const HEX_SIDE_M = Math.sqrt(
+        (2 * HEX_CONFIG.areaM2) /
+        (3 * Math.sqrt(3))
+      );
+      
+      // Pointy-top rasterafstanden
+      const HEX_WIDTH_M = Math.sqrt(3) * HEX_SIDE_M;
+      const HEX_ROW_STEP_M = 1.5 * HEX_SIDE_M;
+      
+      let locationHexLayer = null;
+      let selectedHexId = null;
+      
       let locationMap = null;
       let locationMarker = null;
       let pendingMailto = null;
@@ -2004,6 +2039,7 @@
         level = null;
         coords = null;
         wind = null;
+        selectedHexId = null;
         windLoading = false;
 
         setMode(mode);
@@ -2040,41 +2076,358 @@
           locationMarker = null;
         }
 
+        if (locationMap) {
+          drawLocationHexGrid();
+        }
+        
         $("gpsState").textContent = "Nog geen locatie.";
       }
+
+      // ============================================================
+      // HEXAGOONFUNCTIES
+      // ============================================================
+      
+      // Lokale metercoördinaten omzetten naar latitude/longitude.
+      // x: positief naar het oosten
+      // y: positief naar het noorden
+      function hexMetersToLatLon(x, y) {
+        const earthRadius = 6378137;
+        const originLatRad =
+          HEX_ORIGIN.lat * Math.PI / 180;
+      
+        const lat =
+          HEX_ORIGIN.lat +
+          (y / earthRadius) *
+          (180 / Math.PI);
+      
+        const lon =
+          HEX_ORIGIN.lon +
+          (
+            x /
+            (
+              earthRadius *
+              Math.cos(originLatRad)
+            )
+          ) *
+          (180 / Math.PI);
+      
+        return [lat, lon];
+      }
+      
+      
+      // Pointy-top hexagoon rond een lokaal middelpunt.
+      function createHexagonPoints(centerX, centerY) {
+        const points = [];
+      
+        for (let corner = 0; corner < 6; corner++) {
+          const angleDegrees =
+            30 + corner * 60;
+      
+          const angleRadians =
+            angleDegrees * Math.PI / 180;
+      
+          const x =
+            centerX +
+            HEX_SIDE_M *
+            Math.cos(angleRadians);
+      
+          const y =
+            centerY +
+            HEX_SIDE_M *
+            Math.sin(angleRadians);
+      
+          points.push(
+            hexMetersToLatLon(x, y)
+          );
+        }
+      
+        return points;
+      }
+      
+      
+      function createHexId(q, r) {
+        const qPart =
+          q < 0
+            ? `M${Math.abs(q)}`
+            : `P${q}`;
+      
+        const rPart =
+          r < 0
+            ? `M${Math.abs(r)}`
+            : `P${r}`;
+      
+        return `H-${qPart}-${rPart}`;
+      }
+      
+      
+      // Vast raster rond HEX_ORIGIN.
+      function buildHexGrid() {
+        const cells = [];
+      
+        // Ruim genoeg voor circa 1,2 km rond het anker.
+        const range = 10;
+      
+        for (let q = -range; q <= range; q++) {
+          for (let r = -range; r <= range; r++) {
+            // Axiale coördinaten voor pointy-top hexagonen.
+            const centerX =
+              HEX_WIDTH_M *
+              (q + r / 2);
+      
+            const centerY =
+              HEX_ROW_STEP_M * r;
+      
+            const centerDistance =
+              Math.hypot(centerX, centerY);
+      
+            // Volledige cellen mogen iets buiten
+            // de zichtstraal doorlopen.
+            if (
+              centerDistance >
+              HEX_CONFIG.displayRadiusM +
+              HEX_SIDE_M
+            ) {
+              continue;
+            }
+      
+            cells.push({
+              id: createHexId(q, r),
+              q,
+              r,
+              centerX,
+              centerY,
+              centerLatLon:
+                hexMetersToLatLon(
+                  centerX,
+                  centerY
+                ),
+              points:
+                createHexagonPoints(
+                  centerX,
+                  centerY
+                ),
+            });
+          }
+        }
+      
+        return cells;
+      }
+      
+      
+      const HEX_GRID = buildHexGrid();
+      
+      
+      // Ray-castingtest: ligt een punt in deze zeshoek?
+      function isPointInsideHex(lat, lon, polygon) {
+        let inside = false;
+      
+        for (
+          let i = 0, j = polygon.length - 1;
+          i < polygon.length;
+          j = i++
+        ) {
+          const latI = polygon[i][0];
+          const lonI = polygon[i][1];
+          const latJ = polygon[j][0];
+          const lonJ = polygon[j][1];
+      
+          const crosses =
+            (
+              (latI > lat) !==
+              (latJ > lat)
+            ) &&
+            (
+              lon <
+              (
+                (lonJ - lonI) *
+                (lat - latI)
+              ) /
+              (latJ - latI) +
+              lonI
+            );
+      
+          if (crosses) {
+            inside = !inside;
+          }
+        }
+      
+        return inside;
+      }
+      
+      
+      function getHexIdForLocation(lat, lon) {
+        const matchingCell =
+          HEX_GRID.find((cell) =>
+            isPointInsideHex(
+              lat,
+              lon,
+              cell.points
+            )
+          );
+      
+        return matchingCell?.id || null;
+      }
+      
+      
+      // Teken alle cellen als één Leaflet-laag.
+      function drawLocationHexGrid(selectedId = null) {
+        if (!locationMap) {
+          return;
+        }
+      
+        if (locationHexLayer) {
+          locationMap.removeLayer(
+            locationHexLayer
+          );
+        }
+      
+        locationHexLayer =
+          L.layerGroup().addTo(locationMap);
+      
+        HEX_GRID.forEach((cell) => {
+          const selected =
+            cell.id === selectedId;
+      
+          const polygon =
+            L.polygon(cell.points, {
+              color: selected
+                ? HEX_CONFIG.selectedBorderColor
+                : HEX_CONFIG.borderColor,
+      
+              weight: selected ? 4 : 1,
+      
+              opacity: selected ? 1 : 0.48,
+      
+              fillColor: selected
+                ? HEX_CONFIG.selectedFillColor
+                : HEX_CONFIG.fillColor,
+      
+              fillOpacity: selected
+                ? 0.30
+                : 0.04,
+      
+              // Klikken moet doorstromen naar de kaart.
+              interactive: false,
+            });
+      
+          polygon.addTo(locationHexLayer);
+        });
+      }
+      
+      
+      function selectLocationHex(lat, lon) {
+        const hexId =
+          getHexIdForLocation(lat, lon);
+      
+        selectedHexId = hexId;
+      
+        drawLocationHexGrid(hexId);
+      
+        return hexId;
+      }
+      
+      
+      // Bounds van het zichtbare rastergebied.
+      function getHexGridBounds() {
+        const halfLatitudeDegrees =
+          (
+            HEX_CONFIG.displayRadiusM /
+            6378137
+          ) *
+          (180 / Math.PI);
+      
+        const halfLongitudeDegrees =
+          (
+            HEX_CONFIG.displayRadiusM /
+            (
+              6378137 *
+              Math.cos(
+                HEX_ORIGIN.lat *
+                Math.PI / 180
+              )
+            )
+          ) *
+          (180 / Math.PI);
+      
+        return L.latLngBounds(
+          [
+            HEX_ORIGIN.lat -
+              halfLatitudeDegrees,
+            HEX_ORIGIN.lon -
+              halfLongitudeDegrees,
+          ],
+          [
+            HEX_ORIGIN.lat +
+              halfLatitudeDegrees,
+            HEX_ORIGIN.lon +
+              halfLongitudeDegrees,
+          ]
+        );
+      }
+      
       function initializeLocationMap() {
         if (locationMap) return;
-
+      
         locationMap = L.map("locationMap", {
           zoomControl: true,
-        }).setView([NEERVELP_CHURCH.lat, NEERVELP_CHURCH.lon], 16);
-
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution: "&copy; OpenStreetMap contributors",
-        }).addTo(locationMap);
-
-        locationMap.on("click", async (event) => {
-          const lat = event.latlng.lat;
-          const lon = event.latlng.lng;
-
-          coords = { lat, lon };
-
-          $("latitude").value = lat.toFixed(6);
-          $("longitude").value = lon.toFixed(6);
-
-          if (locationMarker) {
-            locationMarker.setLatLng(event.latlng);
-          } else {
-            locationMarker = L.marker(event.latlng).addTo(locationMap);
-          }
-
-          $("gpsState").textContent =
-            `✓ Locatie gekozen op kaart: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
-
-          wind = null;
-          await updateWind();
         });
+      
+        L.tileLayer(
+          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            maxZoom: 19,
+            attribution:
+              "&copy; OpenStreetMap contributors",
+          }
+        ).addTo(locationMap);
+      
+        // Teken het neutrale 5 ha-raster.
+        drawLocationHexGrid();
+      
+        // Toon het volledige testgebied.
+        locationMap.fitBounds(
+          getHexGridBounds(),
+          {
+            padding: [12, 12],
+          }
+        );
+      
+        locationMap.on(
+          "click",
+          async (event) => {
+            const lat = event.latlng.lat;
+            const lon = event.latlng.lng;
+      
+            coords = { lat, lon };
+      
+            $("latitude").value =
+              lat.toFixed(6);
+      
+            $("longitude").value =
+              lon.toFixed(6);
+      
+            if (locationMarker) {
+              locationMarker.setLatLng(
+                event.latlng
+              );
+            } else {
+              locationMarker =
+                L.marker(event.latlng)
+                  .addTo(locationMap);
+            }
+      
+            const hexId =
+              selectLocationHex(lat, lon);
+      
+            $("gpsState").textContent =
+              hexId
+                ? `✓ Locatie gekozen · Zone ${hexId}`
+                : "✓ Locatie gekozen · Buiten huidig zonegebied";
+      
+            wind = null;
+            await updateWind();
+          }
+        );
       }
       function locationValues() {
         if (coords) return coords;
@@ -2276,7 +2629,22 @@
             coords = { lat: p.coords.latitude, lon: p.coords.longitude };
             $("latitude").value = coords.lat.toFixed(6);
             $("longitude").value = coords.lon.toFixed(6);
-            $("gpsState").textContent = "✓ Locatie bepaald";
+            const hexId =
+              getHexIdForLocation(
+                coords.lat,
+                coords.lon
+              );
+            
+            selectedHexId = hexId;
+            
+            if (locationMap) {
+              drawLocationHexGrid(hexId);
+            }
+            
+            $("gpsState").textContent =
+              hexId
+                ? `✓ Locatie bepaald · Zone ${hexId}`
+                : "✓ Locatie bepaald · Buiten huidig zonegebied";
             $("gps").disabled = false;
             await updateWind();
           },
@@ -2315,30 +2683,47 @@
         show("reports");
         window.location.href = mailto;
       };
-      $("openMapBtn").onclick = () => {
-        $("mapPickerBox").classList.remove("hidden");
-
-        initializeLocationMap();
-
-        // Leaflet moet na het zichtbaar maken de afmetingen opnieuw berekenen.
-        setTimeout(() => {
-          locationMap.invalidateSize();
-
-          if (coords) {
-            locationMap.setView([coords.lat, coords.lon], 17);
-
-            if (locationMarker) {
-              locationMarker.setLatLng([coords.lat, coords.lon]);
-            } else {
-              locationMarker = L.marker([coords.lat, coords.lon]).addTo(
-                locationMap,
-              );
-            }
+    $("openMapBtn").onclick = () => {
+      $("mapPickerBox")
+        .classList
+        .remove("hidden");
+    
+      initializeLocationMap();
+    
+      setTimeout(() => {
+        locationMap.invalidateSize();
+    
+        if (coords) {
+          if (locationMarker) {
+            locationMarker.setLatLng([
+              coords.lat,
+              coords.lon,
+            ]);
           } else {
-            locationMap.setView([NEERVELP_CHURCH.lat, NEERVELP_CHURCH.lon], 16);
+            locationMarker =
+              L.marker([
+                coords.lat,
+                coords.lon,
+              ]).addTo(locationMap);
           }
-        }, 50);
-      };
+    
+          selectLocationHex(
+            coords.lat,
+            coords.lon
+          );
+        } else {
+          selectedHexId = null;
+          drawLocationHexGrid();
+        }
+    
+        locationMap.fitBounds(
+          getHexGridBounds(),
+          {
+            padding: [12, 12],
+          }
+        );
+      }, 100);
+    };
 
       $("closeMapBtn").onclick = () => {
         $("mapPickerBox").classList.add("hidden");
