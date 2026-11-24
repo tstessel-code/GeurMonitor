@@ -124,6 +124,32 @@
       .hidden {
         display: none !important;
       }
+      .selectedZoneInfo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      
+        margin-top: 10px;
+        padding: 10px 12px;
+      
+        border: 1px solid #d8dddf;
+        border-radius: 10px;
+      
+        background: #f6f8f8;
+      }
+      
+      .selectedZoneLabel {
+        color: #687471;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      
+      #selectedZoneName {
+        color: #397d77;
+        font-size: 14px;
+        font-weight: 800;
+      }
       .success {
         text-align: center;
         padding: 30px 18px;
@@ -1182,6 +1208,19 @@
             <div id="mapPickerBox" class="box hidden">
               <div id="locationMap"></div>
 
+              <div
+                id="selectedZoneInfo"
+                class="selectedZoneInfo hidden"
+              >
+                <span class="selectedZoneLabel">
+                  Waarnemingszone
+                </span>
+              
+                <strong id="selectedZoneName">
+                  -
+                </strong>
+              </div>
+              
               <p class="muted">
                 Tik op de kaart om de locatie van de geurwaarneming te kiezen.
               </p>
@@ -1707,13 +1746,17 @@
       };
       
       const HEX_CONFIG = {
-        modelId: "GGP_HEX_5HA_V1",
+        modelId: "GGP_HEX_1_67HA_V1",
         areaM2: 16667,
         displayRadiusM: 1200,
-        borderColor: "#0f766e",
-        fillColor: "#5fb3a7",
-        selectedBorderColor: "#d97706",
-        selectedFillColor: "#f59e0b",
+      
+        // Normale zones: zeer subtiel grijs
+        borderColor: "#aeb4b8",
+        fillColor: "#dfe3e5",
+      
+        // Geselecteerde waarnemingszone
+        selectedBorderColor: "#397d77",
+        selectedFillColor: "#79aaa5",
       };
       
       // Oppervlakte regelmatige zeshoek:
@@ -2294,17 +2337,17 @@
                 ? HEX_CONFIG.selectedBorderColor
                 : HEX_CONFIG.borderColor,
       
-              weight: selected ? 4 : 1,
-      
-              opacity: selected ? 1 : 0.48,
-      
+              weight: selected ? 2.5 : 0.8,
+              
+              opacity: selected ? 0.95 : 0.45,
+              
               fillColor: selected
                 ? HEX_CONFIG.selectedFillColor
                 : HEX_CONFIG.fillColor,
-      
+              
               fillOpacity: selected
-                ? 0.30
-                : 0.04,
+                ? 0.18
+                : 0.015,
       
               // Klikken moet doorstromen naar de kaart.
               interactive: false,
@@ -2313,7 +2356,26 @@
           polygon.addTo(locationHexLayer);
         });
       }
+
+      function getDisplayZoneName(hexId) {
       
+        if (!hexId) {
+          return "-";
+        }
+      
+        const index =
+          HEX_GRID.findIndex(
+            cell =>
+              cell.id === hexId
+          );
+      
+        if (index === -1) {
+          return "-";
+        }
+      
+        return `Zone ${index + 1}`;
+      }
+
       
       function selectLocationHex(lat, lon) {
         const hexId =
