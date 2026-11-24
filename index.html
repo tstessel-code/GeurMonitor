@@ -996,6 +996,71 @@
           font-size: 21px;
         }
       }
+      /* ============================================================
+         GEURMONITOR ZONE PREVIEW
+         ============================================================ */
+      
+      .zoneLabelIcon {
+        background: transparent;
+        border: 0;
+      }
+      
+      .zoneLabel {
+        display: inline-flex;
+      
+        align-items: center;
+        justify-content: center;
+      
+        min-width: 31px;
+        height: 22px;
+      
+        padding: 0 6px;
+      
+        border:
+          1px solid rgba(15, 95, 89, 0.45);
+      
+        border-radius: 99px;
+      
+        background:
+          rgba(255, 255, 255, 0.90);
+      
+        color: #0f5f59;
+      
+        font-size: 10px;
+        font-weight: 900;
+      
+        white-space: nowrap;
+      
+        box-shadow:
+          0 1px 4px rgba(0, 0, 0, 0.12);
+      }
+      
+      
+      .ggpCenterLabel {
+      
+        display: inline-flex;
+      
+        align-items: center;
+        justify-content: center;
+      
+        width: 42px;
+        height: 42px;
+      
+        border:
+          3px solid #ffffff;
+      
+        border-radius: 50%;
+      
+        background: #0f5f59;
+      
+        color: #ffffff;
+      
+        font-size: 11px;
+        font-weight: 900;
+      
+        box-shadow:
+          0 2px 8px rgba(0, 0, 0, 0.28);
+      }
     </style>
   </head>
   <body class="app-loading">
@@ -1694,7 +1759,47 @@
         lat: 50.820261,
         lon: 4.8107,
       };
-
+      // ============================================================
+      // GEURMONITOR ZONES - PREVIEW
+      // 24 zones met gelijke oppervlakte binnen 1 km van GGP
+      // ============================================================
+      
+      // TIJDELIJK:
+      // Voor de visuele test gebruiken we het bestaande kaartcentrum.
+      // Later vervangen we dit door de exacte coordinaten van GGP.
+      const GGP_CENTER = {
+        lat: NEERVELP_CHURCH.lat,
+        lon: NEERVELP_CHURCH.lon,
+      };
+      
+      const ZONE_MODEL = {
+        id: "GGP_1KM_V1_PREVIEW",
+      
+        outerRadius: 1000,
+      
+        rings: [
+          {
+            key: "A",
+            min: 0,
+            max: 1000 * Math.sqrt(4 / 24),
+            sectors: 4,
+          },
+          {
+            key: "B",
+            min: 1000 * Math.sqrt(4 / 24),
+            max: 1000 * Math.sqrt(12 / 24),
+            sectors: 8,
+          },
+          {
+            key: "C",
+            min: 1000 * Math.sqrt(12 / 24),
+            max: 1000,
+            sectors: 12,
+          },
+        ],
+      };
+      
+      let locationZoneLayer = null;
       let locationMap = null;
       let locationMarker = null;
       let pendingMailto = null;
@@ -2042,6 +2147,463 @@
 
         $("gpsState").textContent = "Nog geen locatie.";
       }
+      function normalizeBearing(value) {
+        return ((value % 360) + 360) % 360;
+      }
+      
+      
+      function distanceFromGgp(lat, lon) {
+        const R = 6371000;
+      
+        const lat1 = GGP_CENTER.lat * Math.PI / 180;
+        const lat2 = lat * Math.PI / 180;
+      
+        const deltaLat =
+          (lat - GGP_CENTER.lat) * Math.PI / 180;
+      
+        const deltaLon =
+          (lon - GGP_CENTER.lon) * Math.PI / 180;
+      
+        const a =
+          Math.sin(deltaLat / 2) ** 2 +
+          Math.cos(lat1) *
+            Math.cos(lat2) *
+            Math.sin(deltaLon / 2) ** 2;
+      
+        return (
+          R *
+          2 *
+          Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+          )
+        );
+      }
+      
+      
+      function bearingFromGgp(lat, lon) {
+        const lat1 =
+          GGP_CENTER.lat * Math.PI / 180;
+      
+        const lat2 =
+          lat * Math.PI / 180;
+      
+        const deltaLon =
+          (lon - GGP_CENTER.lon) * Math.PI / 180;
+      
+        const y =
+          Math.sin(deltaLon) *
+          Math.cos(lat2);
+      
+        const x =
+          Math.cos(lat1) *
+            Math.sin(lat2) -
+          Math.sin(lat1) *
+            Math.cos(lat2) *
+            Math.cos(deltaLon);
+      
+        return normalizeBearing(
+          Math.atan2(y, x) * 180 / Math.PI
+        );
+      }
+      
+      
+      function zoneIdForLocation(lat, lon) {
+      
+        const distance =
+          distanceFromGgp(lat, lon);
+      
+        if (distance > 1000) {
+          return "BUITEN-1KM";
+        }
+      
+        const ring =
+          ZONE_MODEL.rings.find(
+            r =>
+              distance >= r.min &&
+              distance <= r.max
+          );
+      
+        if (!ring) return null;
+      
+        const sectorAngle =
+          360 / ring.sectors;
+      
+        const bearing =
+          bearingFromGgp(lat, lon);
+      
+        // Noord ligt midden in een sector
+        const sector =
+          Math.floor(
+            normalizeBearing(
+              bearing + sectorAngle / 2
+            ) / sectorAngle
+          ) % ring.sectors;
+      
+      
+        if (ring.key === "A") {
+          return [
+            "A-N",
+            "A-O",
+            "A-Z",
+            "A-W",
+          ][sector];
+        }
+      
+      
+        if (ring.key === "B") {
+          return [
+            "B-N",
+            "B-NO",
+            "B-O",
+            "B-ZO",
+            "B-Z",
+            "B-ZW",
+            "B-W",
+            "B-NW",
+          ][sector];
+        }
+      
+      
+        return `C${String(
+          sector + 1
+        ).padStart(2, "0")}`;
+      }
+      
+      
+      function zonePolygon(
+        innerRadius,
+        outerRadius,
+        startBearing,
+        endBearing
+      ) {
+      
+        const points = [];
+      
+        const steps = 12;
+      
+      
+        // Buitenste boog
+        for (
+          let i = 0;
+          i <= steps;
+          i++
+        ) {
+      
+          const bearing =
+            startBearing +
+            (
+              (endBearing -
+                startBearing) *
+              i
+            ) /
+              steps;
+      
+          points.push(
+            destinationPoint(
+              GGP_CENTER.lat,
+              GGP_CENTER.lon,
+              bearing,
+              outerRadius
+            )
+          );
+        }
+      
+      
+        // Binnenste boog
+        if (innerRadius > 0) {
+      
+          for (
+            let i = steps;
+            i >= 0;
+            i--
+          ) {
+      
+            const bearing =
+              startBearing +
+              (
+                (endBearing -
+                  startBearing) *
+                i
+              ) /
+                steps;
+      
+            points.push(
+              destinationPoint(
+                GGP_CENTER.lat,
+                GGP_CENTER.lon,
+                bearing,
+                innerRadius
+              )
+            );
+          }
+      
+        } else {
+      
+          points.push([
+            GGP_CENTER.lat,
+            GGP_CENTER.lon,
+          ]);
+      
+        }
+      
+        return points;
+      }
+      
+      
+      function drawZones(
+        map,
+        selectedZone = null
+      ) {
+      
+        const group =
+          L.layerGroup().addTo(map);
+      
+      
+        const colors = {
+          A: "#5fb3a7",
+          B: "#3e97a8",
+          C: "#6e83b7",
+        };
+      
+      
+        ZONE_MODEL.rings.forEach(
+          ring => {
+      
+            const sectorAngle =
+              360 / ring.sectors;
+      
+      
+            for (
+              let i = 0;
+              i < ring.sectors;
+              i++
+            ) {
+      
+              const centerBearing =
+                i * sectorAngle;
+      
+              const startBearing =
+                centerBearing -
+                sectorAngle / 2;
+      
+              const endBearing =
+                centerBearing +
+                sectorAngle / 2;
+      
+      
+              let zoneId;
+      
+      
+              if (ring.key === "A") {
+      
+                zoneId = [
+                  "A-N",
+                  "A-O",
+                  "A-Z",
+                  "A-W",
+                ][i];
+      
+              } else if (
+                ring.key === "B"
+              ) {
+      
+                zoneId = [
+                  "B-N",
+                  "B-NO",
+                  "B-O",
+                  "B-ZO",
+                  "B-Z",
+                  "B-ZW",
+                  "B-W",
+                  "B-NW",
+                ][i];
+      
+              } else {
+      
+                zoneId =
+                  `C${String(
+                    i + 1
+                  ).padStart(2, "0")}`;
+      
+              }
+      
+      
+              const selected =
+                zoneId === selectedZone;
+      
+      
+              L.polygon(
+                zonePolygon(
+                  ring.min,
+                  ring.max,
+                  startBearing,
+                  endBearing
+                ),
+                {
+                  color:
+                    selected
+                      ? "#b45309"
+                      : "#0f5f59",
+      
+                  weight:
+                    selected ? 4 : 1.4,
+      
+                  opacity:
+                    selected ? 1 : 0.72,
+      
+                  fillColor:
+                    selected
+                      ? "#f59e0b"
+                      : colors[ring.key],
+      
+                  fillOpacity:
+                    selected
+                      ? 0.30
+                      : 0.12,
+      
+                  interactive: false,
+                }
+              ).addTo(group);
+      
+      
+              // Label ongeveer midden in zone
+      
+              const labelRadius =
+                ring.min === 0
+                  ? ring.max * 0.62
+                  : (
+                      ring.min +
+                      ring.max
+                    ) / 2;
+      
+      
+              const labelPoint =
+                destinationPoint(
+                  GGP_CENTER.lat,
+                  GGP_CENTER.lon,
+                  centerBearing,
+                  labelRadius
+                );
+      
+      
+              L.marker(
+                labelPoint,
+                {
+                  interactive: false,
+      
+                  icon: L.divIcon({
+                    className:
+                      "zoneLabelIcon",
+      
+                    html:
+                      `<span class="zoneLabel">${zoneId}</span>`,
+      
+                    iconSize:
+                      [38, 22],
+      
+                    iconAnchor:
+                      [19, 11],
+                  }),
+                }
+              ).addTo(group);
+      
+            }
+          }
+        );
+      
+      
+        // Middelpunt GGP
+      
+        L.marker(
+          [
+            GGP_CENTER.lat,
+            GGP_CENTER.lon,
+          ],
+          {
+            interactive: false,
+      
+            icon: L.divIcon({
+              className: "",
+      
+              html:
+                '<span class="ggpCenterLabel">GGP</span>',
+      
+              iconSize: [42, 42],
+      
+              iconAnchor: [21, 21],
+            }),
+          }
+        ).addTo(group);
+      
+      
+        return group;
+      }
+      
+      
+      function zoneBounds() {
+      
+        return L.latLngBounds(
+          [0, 90, 180, 270].map(
+            bearing =>
+              destinationPoint(
+                GGP_CENTER.lat,
+                GGP_CENTER.lon,
+                bearing,
+                1150
+              )
+          )
+        );
+      
+      }
+      
+      
+      function refreshLocationZones(
+        lat = null,
+        lon = null
+      ) {
+      
+        if (!locationMap) {
+          return null;
+        }
+      
+      
+        let selectedZone = null;
+      
+      
+        if (
+          Number.isFinite(lat) &&
+          Number.isFinite(lon)
+        ) {
+      
+          selectedZone =
+            zoneIdForLocation(
+              lat,
+              lon
+            );
+      
+        }
+      
+      
+        if (locationZoneLayer) {
+      
+          locationMap.removeLayer(
+            locationZoneLayer
+          );
+      
+        }
+      
+      
+        locationZoneLayer =
+          drawZones(
+            locationMap,
+            selectedZone
+          );
+      
+      
+        return selectedZone;
+      }
+
       function initializeLocationMap() {
         if (locationMap) return;
 
@@ -2049,12 +2611,26 @@
           zoomControl: true,
         }).setView([NEERVELP_CHURCH.lat, NEERVELP_CHURCH.lon], 16);
 
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          maxZoom: 19,
-          attribution: "&copy; OpenStreetMap contributors",
-        }).addTo(locationMap);
-
-        locationMap.on("click", async (event) => {
+       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap contributors",
+      }).addTo(locationMap);
+      
+      
+      // Toon zones
+      refreshLocationZones();
+      
+      
+      // Zorg dat het volledige 1 km gebied zichtbaar is
+      locationMap.fitBounds(
+        zoneBounds(),
+        {
+          padding: [12, 12],
+        }
+      );
+      
+      
+      locationMap.on("click", async (event) => {
           const lat = event.latlng.lat;
           const lon = event.latlng.lng;
 
@@ -2069,8 +2645,15 @@
             locationMarker = L.marker(event.latlng).addTo(locationMap);
           }
 
+          const selectedZone =
+            refreshLocationZones(
+              lat,
+              lon
+            );
+          
+          
           $("gpsState").textContent =
-            `✓ Locatie gekozen op kaart: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+            `✓ Locatie gekozen op kaart · Zone ${selectedZone || "onbekend"}`;
 
           wind = null;
           await updateWind();
