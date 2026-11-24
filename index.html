@@ -2616,7 +2616,24 @@
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(locationMap);
       
+      // ========================================
+      // TEST: eenvoudige zichtbare 1 km cirkel
+      // ========================================
       
+      L.circle(
+        [
+          GGP_CENTER.lat,
+          GGP_CENTER.lon
+        ],
+        {
+          radius: 1000,
+          color: "#ff0000",
+          weight: 5,
+          fillColor: "#ff0000",
+          fillOpacity: 0.25
+        }
+      ).addTo(locationMap);
+        
       // Toon zones
       refreshLocationZones();
       
