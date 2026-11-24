@@ -1734,15 +1734,16 @@
         lon: 4.8107,
       };
 
-      // ============================================================
-      // 5 HA HEXAGOONZONES - VISUELE TEST
-      // ============================================================
+      const GGP_CENTER = {
+        lat: 50.824190,
+        lon: 4.818113,
+      };
       
-      // Tijdelijk rasteranker.
-      // Later vervangen door een definitief vast referentiepunt.
+      // Het volledige hexagoonraster wordt op GGP verankerd.
+      // GGP ligt exact in het midden van hex H-P0-P0.
       const HEX_ORIGIN = {
-        lat: NEERVELP_CHURCH.lat,
-        lon: NEERVELP_CHURCH.lon,
+        lat: GGP_CENTER.lat,
+        lon: GGP_CENTER.lon,
       };
       
       const HEX_CONFIG = {
