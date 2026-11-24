@@ -2609,7 +2609,7 @@
 
         locationMap = L.map("locationMap", {
           zoomControl: true,
-        }).setView([NEERVELP_CHURCH.lat, NEERVELP_CHURCH.lon], 16);
+        });
 
        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
@@ -2898,30 +2898,68 @@
         show("reports");
         window.location.href = mailto;
       };
-      $("openMapBtn").onclick = () => {
-        $("mapPickerBox").classList.remove("hidden");
-
-        initializeLocationMap();
-
-        // Leaflet moet na het zichtbaar maken de afmetingen opnieuw berekenen.
-        setTimeout(() => {
-          locationMap.invalidateSize();
-
-          if (coords) {
-            locationMap.setView([coords.lat, coords.lon], 17);
-
-            if (locationMarker) {
-              locationMarker.setLatLng([coords.lat, coords.lon]);
-            } else {
-              locationMarker = L.marker([coords.lat, coords.lon]).addTo(
-                locationMap,
-              );
-            }
+     $("openMapBtn").onclick = () => {
+    
+      $("mapPickerBox").classList.remove("hidden");
+    
+      initializeLocationMap();
+    
+      setTimeout(() => {
+    
+        // Leaflet moet de afmetingen opnieuw berekenen
+        // omdat de kaart voordien verborgen was.
+        locationMap.invalidateSize();
+    
+    
+        // Indien reeds een waarnemingslocatie gekozen is:
+        if (coords) {
+    
+          if (locationMarker) {
+    
+            locationMarker.setLatLng([
+              coords.lat,
+              coords.lon
+            ]);
+    
           } else {
-            locationMap.setView([NEERVELP_CHURCH.lat, NEERVELP_CHURCH.lon], 16);
+    
+            locationMarker = L.marker([
+              coords.lat,
+              coords.lon
+            ]).addTo(locationMap);
+    
           }
-        }, 50);
-      };
+    
+    
+          // Toon opnieuw de zones en markeer
+          // de zone van de gekozen waarneming.
+          refreshLocationZones(
+            coords.lat,
+            coords.lon
+          );
+    
+        } else {
+    
+          // Geen locatie gekozen:
+          // toon alle zones zonder selectie.
+          refreshLocationZones();
+    
+        }
+    
+    
+        // BELANGRIJK:
+        // pas NA invalidateSize de volledige
+        // zonecirkel in beeld brengen.
+        locationMap.fitBounds(
+          zoneBounds(),
+          {
+            padding: [15, 15]
+          }
+        );
+    
+      }, 100);
+    
+    };
 
       $("closeMapBtn").onclick = () => {
         $("mapPickerBox").classList.add("hidden");
