@@ -2605,76 +2605,141 @@
       }
 
       function initializeLocationMap() {
-        if (locationMap) return;
-
+      
+        console.log("MAP TEST 1 - initializeLocationMap gestart");
+      
+      
+        // Oude Leaflet-map volledig verwijderen
+        if (locationMap) {
+      
+          console.log("MAP TEST 2 - oude kaart verwijderen");
+      
+          locationMap.remove();
+      
+          locationMap = null;
+          locationMarker = null;
+          locationZoneLayer = null;
+      
+        }
+      
+      
+        // HTML-container leegmaken
+        $("locationMap").innerHTML = "";
+      
+      
+        // Nieuwe Leaflet-map
         locationMap = L.map("locationMap", {
           zoomControl: true,
         });
-
-       L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(locationMap);
       
-      // ========================================
-      // TEST: eenvoudige zichtbare 1 km cirkel
-      // ========================================
       
-      L.circle(
-        [
+        console.log(
+          "MAP TEST 3 - kaart aangemaakt",
           GGP_CENTER.lat,
           GGP_CENTER.lon
-        ],
-        {
-          radius: 1000,
-          color: "#ff0000",
-          weight: 5,
-          fillColor: "#ff0000",
-          fillOpacity: 0.25
-        }
-      ).addTo(locationMap);
-        
-      // Toon zones
-      refreshLocationZones();
+        );
       
       
-      // Zorg dat het volledige 1 km gebied zichtbaar is
-      locationMap.fitBounds(
-        zoneBounds(),
-        {
-          padding: [12, 12],
-        }
-      );
-      
-      
-      locationMap.on("click", async (event) => {
-          const lat = event.latlng.lat;
-          const lon = event.latlng.lng;
-
-          coords = { lat, lon };
-
-          $("latitude").value = lat.toFixed(6);
-          $("longitude").value = lon.toFixed(6);
-
-          if (locationMarker) {
-            locationMarker.setLatLng(event.latlng);
-          } else {
-            locationMarker = L.marker(event.latlng).addTo(locationMap);
+        // OpenStreetMap
+        L.tileLayer(
+          "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            maxZoom: 19,
+            attribution: "&copy; OpenStreetMap contributors",
           }
-
-          const selectedZone =
-            refreshLocationZones(
+        ).addTo(locationMap);
+      
+      
+        // ==================================================
+        // HARDE TEST
+        // ==================================================
+      
+        const testCircle = L.circle(
+          [
+            GGP_CENTER.lat,
+            GGP_CENTER.lon
+          ],
+          {
+            radius: 1000,
+      
+            color: "#ff0000",
+            weight: 8,
+      
+            fillColor: "#ffff00",
+            fillOpacity: 0.45
+          }
+        );
+      
+        testCircle.addTo(locationMap);
+      
+      
+        console.log(
+          "MAP TEST 4 - rode cirkel toegevoegd",
+          testCircle.getBounds()
+        );
+      
+      
+        // Heel bewust fitten op de testcirkel zelf.
+        locationMap.fitBounds(
+          testCircle.getBounds(),
+          {
+            padding: [20, 20]
+          }
+        );
+      
+      
+        // Klikfunctionaliteit behouden
+        locationMap.on(
+          "click",
+          async (event) => {
+      
+            const lat =
+              event.latlng.lat;
+      
+            const lon =
+              event.latlng.lng;
+      
+      
+            coords = {
               lat,
               lon
-            );
-          
-          
-          $("gpsState").textContent =
-            `✓ Locatie gekozen op kaart · Zone ${selectedZone || "onbekend"}`;
-
-          wind = null;
-          await updateWind();
-        });
+            };
+      
+      
+            $("latitude").value =
+              lat.toFixed(6);
+      
+            $("longitude").value =
+              lon.toFixed(6);
+      
+      
+            if (locationMarker) {
+      
+              locationMarker.setLatLng(
+                event.latlng
+              );
+      
+            } else {
+      
+              locationMarker =
+                L.marker(
+                  event.latlng
+                ).addTo(locationMap);
+      
+            }
+      
+      
+            $("gpsState").textContent =
+              `✓ Testlocatie gekozen: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+      
+      
+            wind = null;
+      
+            await updateWind();
+      
+          }
+        );
+      
       }
       function locationValues() {
         if (coords) return coords;
@@ -2915,66 +2980,36 @@
         show("reports");
         window.location.href = mailto;
       };
-     $("openMapBtn").onclick = () => {
+    $("openMapBtn").onclick = () => {
+
+      console.log("MAP TEST 0 - kaartknop aangeklikt");
     
-      $("mapPickerBox").classList.remove("hidden");
-    
-      initializeLocationMap();
-    
-      setTimeout(() => {
-    
-        // Leaflet moet de afmetingen opnieuw berekenen
-        // omdat de kaart voordien verborgen was.
-        locationMap.invalidateSize();
+      $("mapPickerBox")
+        .classList
+        .remove("hidden");
     
     
-        // Indien reeds een waarnemingslocatie gekozen is:
-        if (coords) {
+      // Wacht tot de browser het zichtbare
+      // kaartvak werkelijk heeft gerenderd.
+      requestAnimationFrame(() => {
     
-          if (locationMarker) {
-    
-            locationMarker.setLatLng([
-              coords.lat,
-              coords.lon
-            ]);
-    
-          } else {
-    
-            locationMarker = L.marker([
-              coords.lat,
-              coords.lon
-            ]).addTo(locationMap);
-    
-          }
+        initializeLocationMap();
     
     
-          // Toon opnieuw de zones en markeer
-          // de zone van de gekozen waarneming.
-          refreshLocationZones(
-            coords.lat,
-            coords.lon
+        requestAnimationFrame(() => {
+    
+          locationMap.invalidateSize();
+    
+    
+          console.log(
+            "MAP TEST 5 - kaartafmetingen",
+            $("locationMap").offsetWidth,
+            $("locationMap").offsetHeight
           );
     
-        } else {
+        });
     
-          // Geen locatie gekozen:
-          // toon alle zones zonder selectie.
-          refreshLocationZones();
-    
-        }
-    
-    
-        // BELANGRIJK:
-        // pas NA invalidateSize de volledige
-        // zonecirkel in beeld brengen.
-        locationMap.fitBounds(
-          zoneBounds(),
-          {
-            padding: [15, 15]
-          }
-        );
-    
-      }, 100);
+      });
     
     };
 
